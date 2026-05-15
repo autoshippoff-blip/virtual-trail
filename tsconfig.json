@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ESNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noEmit": true,
+    "declaration": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@trail/config": ["libs/config/src/index.ts"],
+      "@trail/db": ["libs/db/src/index.ts"],
+      "@trail/queue": ["libs/queue/src/index.ts"],
+      "@trail/ai": ["libs/ai/src/index.ts"],
+      "@trail/storage": ["libs/storage/src/index.ts"],
+      "@trail/tenant": ["libs/tenant/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

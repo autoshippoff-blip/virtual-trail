@@ -1,5 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_RESULTS === 'true' || true;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_RESULTS === 'true';
 
 const MOCK_STATE: Record<string, number> = {};
 

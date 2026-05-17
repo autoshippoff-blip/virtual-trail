@@ -33,6 +33,9 @@ export const config = {
   gemini: {
     apiKey: requireEnv('GEMINI_API_KEY'),
   },
+  widget: {
+    publicUrl: requireEnv('WIDGET_PUBLIC_URL'),
+  },
   shopify: {
     apiKey: requireEnv('SHOPIFY_API_KEY'),
     apiSecret: requireEnv('SHOPIFY_API_SECRET'),

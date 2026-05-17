@@ -3,6 +3,7 @@
   "private": true,
   "description": "AI Virtual Try-On SaaS Platform",
   "scripts": {
+    "postinstall": "pnpm db:generate",
     "dev": "concurrently \"pnpm dev:api\" \"pnpm dev:worker\"",
     "dev:api": "pnpm --filter @trail/api dev",
     "dev:worker": "pnpm --filter @trail/worker dev",

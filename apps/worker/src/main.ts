@@ -21,7 +21,7 @@ async function bootstrap() {
   const tryonWorker = new Worker(
     QUEUE_NAMES.TRYON,
     processTryOn,
-    { 
+    {
       connection,
     }
   );
@@ -29,7 +29,7 @@ async function bootstrap() {
   const cleanupWorker = new Worker(
     QUEUE_NAMES.CLEANUP,
     processCleanup,
-    { 
+    {
       connection,
     }
   );

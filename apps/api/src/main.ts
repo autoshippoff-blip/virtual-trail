@@ -32,11 +32,13 @@ async function bootstrap() {
   const connection = new Redis(appConfig.redis.url, { maxRetriesPerRequest: null });
   const tryonQueue = new Queue(QUEUE_NAMES.TRYON, { connection });
   const cleanupQueue = new Queue(QUEUE_NAMES.CLEANUP, { connection });
+  const dlqQueue = new Queue('tryon-dlq', { connection });
 
   createBullBoard({
     queues: [
       new BullMQAdapter(tryonQueue) as any,
       new BullMQAdapter(cleanupQueue) as any,
+      new BullMQAdapter(dlqQueue) as any,
     ],
     serverAdapter: serverAdapter,
   });

@@ -59,11 +59,35 @@ async function bootstrap() {
     logger.info({ jobId: job.id, queue: QUEUE_NAMES.TRYON }, 'Job completed');
   });
 
-  tryonWorker.on('failed', (job, err) => {
+  tryonWorker.on('failed', async (job, err) => {
     logger.error({ jobId: job?.id, queue: QUEUE_NAMES.TRYON, err: err.message }, 'Job failed');
+    
+    const isPermanent = job && job.attemptsMade >= (job.opts.attempts || 1);
+
+    if (isPermanent) {
+      logger.error({ jobId: job.id, attemptsMade: job.attemptsMade }, 'Job PERMANENTLY failed. Moving to DLQ.');
+      try {
+        const dlqQueue = new Queue('tryon-dlq', { connection });
+        await dlqQueue.add('failed-job', {
+          originalJobId: job.id,
+          data: job.data,
+          failedAt: new Date().toISOString(),
+          reason: err.message,
+          stack: err.stack,
+        });
+        logger.info({ jobId: job.id }, 'Successfully routed job to tryon-dlq');
+      } catch (dlqErr: any) {
+        logger.error({ dlqErr: dlqErr.message }, 'Failed to route job to DLQ');
+      }
+    }
+
     if (config.sentry.dsn) {
       Sentry.captureException(err, {
-        tags: { queue: QUEUE_NAMES.TRYON, jobId: job?.id },
+        tags: { 
+          queue: QUEUE_NAMES.TRYON, 
+          jobId: job?.id,
+          permanent: isPermanent ? 'true' : 'false',
+        },
         extra: { jobData: job?.data }
       });
     }

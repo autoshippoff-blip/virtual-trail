@@ -16,11 +16,38 @@ const redis = new Redis(config.redis.url, {
   maxRetriesPerRequest: null,
 });
 
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: { retries: number; delayMs: number; name: string }
+): Promise<T> {
+  let lastErr: any;
+  for (let attempt = 1; attempt <= options.retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      lastErr = err;
+      logger.warn(
+        { attempt, name: options.name, error: err.message },
+        `Transient error in ${options.name}, retrying...`
+      );
+      if (attempt < options.retries) {
+        await new Promise((resolve) => setTimeout(resolve, options.delayMs * attempt));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 export async function processTryOn(job: Job<TryonJobPayload>) {
   const start = Date.now();
   const { requestId, tenantId, productId, productImageUrl, userImageKey, config: tenantConfig } = job.data;
 
-  logger.info({ requestId, tenantId, productId }, 'Processing try-on job');
+  logger.info({
+    requestId,
+    tenantId,
+    productId,
+    attempt: job.attemptsMade + 1,
+  }, 'Processing try-on job');
 
   try {
     // STEP 1: Update status to processing
@@ -42,26 +69,35 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       logger.info({ requestId, cacheKey }, 'Compliment cache hit');
     }
 
-    // STEP 4: Call Segmind generateTryOn()
+    // STEP 4: Call Segmind generateTryOn() with local retries
     const segmindStart = Date.now();
-    const { imageBuffer } = await generateTryOn({
-      userImageUrl,
-      garmentImageUrl: productImageUrl,
-      model: tenantConfig.segmindModel,
-    });
+    const { imageBuffer } = await withRetry(
+      () => generateTryOn({
+        userImageUrl,
+        garmentImageUrl: productImageUrl,
+        model: tenantConfig.segmindModel,
+      }),
+      { retries: 3, delayMs: 1000, name: 'Segmind Try-On Generation' }
+    );
     const segmindMs = Date.now() - segmindStart;
 
-    // STEP 5: Upload generated image to R2
+    // STEP 5: Upload generated image to R2 with local retries
     const uploadStart = Date.now();
     const generatedKey = `${tenantId}/generated/${requestId}`;
-    await upload(generatedKey, imageBuffer, 'image/jpeg');
+    await withRetry(
+      () => upload(generatedKey, imageBuffer, 'image/jpeg'),
+      { retries: 3, delayMs: 1000, name: 'Cloudflare R2 Upload' }
+    );
     const uploadMs = Date.now() - uploadStart;
 
-    // STEP 6: Call Gemini Flash if cache miss
+    // STEP 6: Call Gemini Flash with local retries if cache miss
     let geminiMs = 0;
     if (!complimentResult) {
       const geminiStart = Date.now();
-      complimentResult = await generateCompliment({ tone: tenantConfig.complimentTone });
+      complimentResult = await withRetry(
+        () => generateCompliment({ tone: tenantConfig.complimentTone }),
+        { retries: 3, delayMs: 1000, name: 'Gemini Text Generation' }
+      );
       geminiMs = Date.now() - geminiStart;
       
       // Cache for 24h
@@ -87,6 +123,7 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       requestId,
       tenantId,
       elapsed,
+      attempt: job.attemptsMade + 1,
       complimentCached,
       segmindMs,
       geminiMs,
@@ -100,6 +137,7 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       requestId,
       tenantId,
       elapsed,
+      attempt: job.attemptsMade + 1,
       error: error.message,
       stack: error.stack,
       event: 'tryon_failed'
@@ -107,7 +145,7 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
 
     await updateTryonRequest(requestId, {
       status: 'failed',
-      errorMessage: error.message,
+      errorMessage: `[Attempt ${job.attemptsMade + 1}/3 failed]: ${error.message}`,
     });
 
     throw error; // Re-throw for BullMQ retry strategy

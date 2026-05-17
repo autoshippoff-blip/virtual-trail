@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: ^20.19.41
+        version: 20.19.41
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2

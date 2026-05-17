@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate dev --schema libs/db/prisma/schema.prisma"
   },
   "devDependencies": {
+    "@types/node": "^20.19.41",
     "concurrently": "^8.2.2",
     "prisma": "^5.22.0",
     "tsx": "^4.7.1",

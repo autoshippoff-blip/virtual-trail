@@ -6,7 +6,7 @@
     "dev": "tsx watch src/main.ts",
     "build": "nest build",
     "start": "nest start",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/apps/api/src/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.3",
@@ -17,6 +17,7 @@
     "@trail/ai": "workspace:*",
     "@trail/config": "workspace:*",
     "@trail/db": "workspace:*",
+    "@prisma/client": "^5.22.0",
     "@trail/queue": "workspace:*",
     "@trail/storage": "workspace:*",
     "@trail/tenant": "workspace:*",
@@ -30,6 +31,7 @@
     "pino-http": "^9.0.0",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
+    "tsconfig-paths": "^4.2.0",
     "uuid": "^14.0.0"
   },
   "devDependencies": {

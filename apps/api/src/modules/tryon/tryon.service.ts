@@ -11,6 +11,7 @@ import {
 import { QUEUE_NAMES, JOB_OPTIONS, TryonJobPayload } from '@trail/queue';
 import { upload, getSignedReadUrl } from '@trail/storage';
 import { compressForTryOn } from '@trail/ai';
+import { resolveTenantConfig } from '@trail/tenant';
 import { CreateTryonDto, TryonStatusResponse } from './tryon.dto';
 import { validateUserImage } from './image.validation';
 import { ImageValidationError } from './tryon.errors';
@@ -60,8 +61,7 @@ export class TryonService {
     await upload(userImageKey, compressed, 'image/jpeg');
 
     // 6. Enqueue job
-    const tenant = (await import('@trail/tenant')).resolveTenantConfig(dto.tenantId); // Get config for payload
-    const resolvedTenant = await tenant;
+    const resolvedTenant = await resolveTenantConfig(dto.tenantId); // Get config for payload
 
     const payload: TryonJobPayload = {
       requestId: tryonRequest.id,

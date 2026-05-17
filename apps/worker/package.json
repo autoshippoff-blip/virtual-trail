@@ -13,6 +13,7 @@
     "pino-pretty": "^10.3.1",
     "@trail/config": "workspace:*",
     "@trail/db": "workspace:*",
+    "@prisma/client": "^5.22.0",
     "@trail/queue": "workspace:*",
     "@trail/ai": "workspace:*",
     "@trail/storage": "workspace:*"

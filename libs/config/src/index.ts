@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import { join } from 'path';
 
 // Load .env from root if it exists
-dotenv.config({ path: join(__dirname, '../../../.env') });
+dotenv.config({ path: join(process.cwd(), '.env') });
 dotenv.config(); // Also check local
 
 function requireEnv(key: string): string {

@@ -14,12 +14,12 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@trail/config": ["libs/config/src/index.ts"],
-      "@trail/db": ["libs/db/src/index.ts"],
-      "@trail/queue": ["libs/queue/src/index.ts"],
-      "@trail/ai": ["libs/ai/src/index.ts"],
-      "@trail/storage": ["libs/storage/src/index.ts"],
-      "@trail/tenant": ["libs/tenant/src/index.ts"]
+      "@trail/config": ["libs/config/src/index"],
+      "@trail/db": ["libs/db/src/index"],
+      "@trail/queue": ["libs/queue/src/index"],
+      "@trail/ai": ["libs/ai/src/index"],
+      "@trail/storage": ["libs/storage/src/index"],
+      "@trail/tenant": ["libs/tenant/src/index"]
     }
   },
   "exclude": ["node_modules", "dist"]

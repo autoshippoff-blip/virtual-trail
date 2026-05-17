@@ -1,4 +1,4 @@
-import { JobsOptions } from 'bullmq';
+import type { JobsOptions } from 'bullmq';
 
 export interface TryonJobPayload {
   requestId: string;

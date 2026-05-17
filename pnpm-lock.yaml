@@ -44,9 +44,6 @@ importers:
       '@sentry/nestjs':
         specifier: ^8.0.0
         version: 8.55.2(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)
-      '@sentry/profiling-node':
-        specifier: ^8.0.0
-        version: 8.55.2
       '@trail/ai':
         specifier: workspace:*
         version: link:../../libs/ai
@@ -1534,11 +1531,6 @@ packages:
       '@opentelemetry/sdk-trace-base': ^1.30.1
       '@opentelemetry/semantic-conventions': ^1.28.0
 
-  '@sentry/profiling-node@8.55.2':
-    resolution: {integrity: sha512-qnlK+iImqB20LF9aUVvzS0oujk3V/+TfIji4er3JS2J9ifIxbvdHexkYtXUoC2A5Ps7jq9kKO1AlJvf/ABMFaQ==}
-    engines: {node: '>=14.18'}
-    hasBin: true
-
   '@smithy/core@3.24.3':
     resolution: {integrity: sha512-Ep/7tPamGY8mgESE3LyLKtxJyy6U52WWAqr/3wial47Sj4u3PiIF73AOGI27UyLy9duTkhZbgzodOfLV4TduZg==}
     engines: {node: '>=18.0.0'}
@@ -2772,10 +2764,6 @@ packages:
       pino: ^7.5.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
       pino-http: ^6.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
       rxjs: ^7.1.0
-
-  node-abi@3.92.0:
-    resolution: {integrity: sha512-KdHvFWZjEKDf0cakgFjebl371GPsISX2oZHcuyKqM7DtogIsHrqKeLTo8wBHxaXRAQlY2PsPlZmfo+9ZCxEREQ==}
-    engines: {node: '>=10'}
 
   node-abort-controller@3.1.1:
     resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
@@ -4988,15 +4976,6 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.41.1
       '@sentry/core': 8.55.2
 
-  '@sentry/profiling-node@8.55.2':
-    dependencies:
-      '@sentry/core': 8.55.2
-      '@sentry/node': 8.55.2
-      detect-libc: 2.1.2
-      node-abi: 3.92.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@smithy/core@3.24.3':
     dependencies:
       '@aws-crypto/crc32': 5.2.0
@@ -6370,10 +6349,6 @@ snapshots:
       pino: 8.21.0
       pino-http: 9.0.0
       rxjs: 7.8.2
-
-  node-abi@3.92.0:
-    dependencies:
-      semver: 7.8.0
 
   node-abort-controller@3.1.1: {}
 

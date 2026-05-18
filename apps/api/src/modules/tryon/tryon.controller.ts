@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { TenantGuard } from '../../guards/tenant.guard';
 import { TryonService } from './tryon.service';
 import { CreateTryonDto, TryonResponse, TryonStatusResponse } from './tryon.dto';
@@ -9,6 +10,7 @@ export class TryonController {
 
   @Post()
   @UseGuards(TenantGuard)
+  @Throttle({ tryon: { limit: 3, ttl: 60000 }, burst: { limit: 2, ttl: 1000 } })
   async create(
     @Body() dto: CreateTryonDto,
     @Req() req: any,

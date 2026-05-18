@@ -10,8 +10,11 @@ interface UploadTabProps {
 
 const UploadTab: React.FC<UploadTabProps> = ({ productId, tenantId }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { setStatus, setJobId, setUserImage, setError } = useStore();
+  const { setStatus, setJobId, setUserImage, setError, config } = useStore();
   const [isDragging, setIsDragging] = useState(false);
+
+  const theme = config?.widgetTheme || 'light';
+  const primaryColor = config?.primaryColor || '#000000';
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -48,9 +51,13 @@ const UploadTab: React.FC<UploadTabProps> = ({ productId, tenantId }) => {
         onDragLeave={() => setIsDragging(false)}
         onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }}
         onClick={() => fileInputRef.current?.click()}
-        className={`tryon-flex-1 tryon-border-2 tryon-border-dashed tryon-rounded-xl tryon-flex tryon-flex-col tryon-items-center tryon-justify-center tryon-cursor-pointer tryon-transition-all ${
-          isDragging ? 'tryon-border-black tryon-bg-gray-50' : 'tryon-border-gray-200 tryon-hover:border-gray-300'
-        }`}
+        className={`tryon-flex-1 tryon-border-2 tryon-border-dashed tryon-rounded-xl tryon-flex tryon-flex-col tryon-items-center tryon-justify-center tryon-cursor-pointer tryon-transition-all`}
+        style={{
+          borderColor: isDragging ? primaryColor : (theme === 'dark' ? '#334155' : '#cbd5e1'),
+          backgroundColor: isDragging 
+            ? (theme === 'dark' ? 'rgba(30, 41, 59, 0.4)' : '#f8fafc') 
+            : 'transparent',
+        }}
       >
         <input
           type="file"
@@ -59,16 +66,25 @@ const UploadTab: React.FC<UploadTabProps> = ({ productId, tenantId }) => {
           accept="image/*"
           onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
         />
-        <div className="tryon-w-16 tryon-h-16 tryon-bg-gray-50 tryon-rounded-full tryon-flex tryon-items-center tryon-justify-center tryon-mb-4">
-          <Upload className="tryon-w-8 tryon-h-8 tryon-text-gray-400" />
+        <div className={`tryon-w-16 tryon-h-16 tryon-rounded-full tryon-flex tryon-items-center tryon-justify-center tryon-mb-4`}
+          style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#f8fafc' }}
+        >
+          <Upload className="tryon-w-8 tryon-h-8" style={{ color: primaryColor }} />
         </div>
-        <p className="tryon-text-sm tryon-font-medium tryon-mb-1">Click or drag to upload</p>
-        <p className="tryon-text-xs tryon-text-gray-400">JPG, PNG or WebP (max. 5MB)</p>
+        <p className={`tryon-text-sm tryon-font-medium tryon-mb-1 ${theme === 'dark' ? 'tryon-text-slate-200' : 'tryon-text-slate-800'}`}>Click or drag to upload</p>
+        <p className={`tryon-text-xs ${theme === 'dark' ? 'tryon-text-slate-500' : 'tryon-text-slate-400'}`}>JPG, PNG or WebP (max. 5MB)</p>
       </div>
 
-      <div className="tryon-mt-6 tryon-bg-blue-50 tryon-p-4 tryon-rounded-xl tryon-flex tryon-gap-3">
-        <AlertCircle className="tryon-w-5 tryon-h-5 tryon-text-blue-500 tryon-flex-shrink-0" />
-        <div className="tryon-text-xs tryon-text-blue-700 tryon-leading-relaxed">
+      <div className={`tryon-mt-6 tryon-p-4 tryon-rounded-xl tryon-flex tryon-gap-3`}
+        style={{
+          backgroundColor: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#eff6ff',
+          border: theme === 'dark' ? '1px solid #1e293b' : 'none',
+        }}
+      >
+        <AlertCircle className="tryon-w-5 tryon-h-5 tryon-flex-shrink-0" style={{ color: primaryColor }} />
+        <div className={`tryon-text-xs tryon-leading-relaxed`}
+          style={{ color: theme === 'dark' ? '#94a3b8' : '#1d4ed8' }}
+        >
           <strong>Stylist Tip:</strong> For best results, use a well-lit, front-facing photo with a simple background.
         </div>
       </div>

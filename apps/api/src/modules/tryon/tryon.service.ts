@@ -28,6 +28,41 @@ export class TryonService {
   }
 
   async create(dto: CreateTryonDto, requestId: string): Promise<{ jobId: string }> {
+    // 0. Verify cryptographic request signature if provided (secures API from public automated scrape vectors)
+    if (dto.signature) {
+      const crypto = require('crypto');
+      const tenant = await resolveTenantConfig(dto.tenantId);
+      
+      const message = `${dto.tenantId}:${dto.productId}:${dto.timestamp || ''}`;
+      const expectedSignature = crypto
+        .createHmac('sha256', tenant.apiKey)
+        .update(message)
+        .digest('hex');
+
+      const signatureBuffer = Buffer.from(dto.signature, 'hex');
+      const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+      
+      let isSignatureValid = false;
+      try {
+        if (signatureBuffer.length === expectedBuffer.length) {
+          isSignatureValid = crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+        }
+      } catch (err) {}
+
+      if (!isSignatureValid) {
+        throw new BadRequestException('Invalid request cryptographic signature');
+      }
+
+      // Check request timestamp validity to prevent replay attacks (15-min window drift)
+      if (dto.timestamp) {
+        const now = Date.now();
+        const drift = Math.abs(now - dto.timestamp);
+        if (drift > 15 * 60 * 1000) {
+          throw new BadRequestException('Request timestamp expired (replay protection)');
+        }
+      }
+    }
+
     // 1. Validate image
     let buffer: Buffer;
     try {

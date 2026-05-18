@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsBase64 } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateTryonDto {
   @IsString()
@@ -11,8 +11,15 @@ export class CreateTryonDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsBase64()
   userImage!: string;
+
+  @IsString()
+  @IsOptional()
+  signature?: string;
+
+  @IsNumber()
+  @IsOptional()
+  timestamp?: number;
 }
 
 export interface TryonResponse {

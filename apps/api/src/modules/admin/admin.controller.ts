@@ -334,6 +334,8 @@ export class AdminController {
       complimentTone?: string;
       segmindModel?: string;
       logoUrl?: string;
+      buttonStyle?: string;
+      widgetTheme?: string;
     }
   ) {
     return this.adminService.createTenant(body);

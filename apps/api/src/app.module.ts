@@ -9,6 +9,7 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { TryonModule } from './modules/tryon/tryon.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { RedisThrottlerStorage } from './common/throttler/redis-throttler.storage';
 
 @Module({
   imports: [
@@ -17,10 +18,16 @@ import { AdminModule } from './modules/admin/admin.module';
         transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
       },
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRootAsync({
+      useFactory: () => ({
+        throttlers: [
+          { name: 'burst', ttl: 1000, limit: 2 },
+          { name: 'standard', ttl: 60000, limit: 60 },
+          { name: 'tryon', ttl: 60000, limit: 3 },
+        ],
+        storage: new RedisThrottlerStorage(),
+      }),
+    }),
     TenantsModule,
     TryonModule,
     AdminModule,

@@ -18,6 +18,8 @@ export class AdminService {
     complimentTone?: string;
     segmindModel?: string;
     logoUrl?: string;
+    buttonStyle?: string;
+    widgetTheme?: string;
   }) {
     return prisma.tenant.create({
       data: {
@@ -30,6 +32,8 @@ export class AdminService {
             complimentTone: dto.complimentTone || 'friendly',
             segmindModel: dto.segmindModel || 'fashion-tryon-v1',
             logoUrl: dto.logoUrl || null,
+            buttonStyle: dto.buttonStyle || 'rounded',
+            widgetTheme: dto.widgetTheme || 'light',
           },
         },
       },

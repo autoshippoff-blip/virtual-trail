@@ -13,7 +13,7 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
-  const { status, reset, error } = useStore();
+  const { status, reset, error, config } = useStore();
   const [activeTab, setActiveTab] = useState<'upload' | 'camera'>('upload');
 
   const handleClose = () => {
@@ -21,17 +21,45 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
     onClose();
   };
 
+  const theme = config?.widgetTheme || 'light';
+  const btnStyle = config?.buttonStyle || 'rounded';
+  const radius = btnStyle === 'square' ? '0px' : btnStyle === 'capsule' ? '9999px' : '16px';
+  const primaryColor = config?.primaryColor || '#000000';
+  
+  // Theme class mappings
+  const bgClass = theme === 'dark' 
+    ? 'tryon-bg-slate-950 tryon-text-white' 
+    : theme === 'glassmorphism'
+    ? 'tryon-bg-white/70 tryon-backdrop-blur-md tryon-text-slate-900'
+    : 'tryon-bg-white tryon-text-slate-900';
+
+  const borderClass = theme === 'dark' 
+    ? 'tryon-border-slate-800' 
+    : 'tryon-border-slate-100';
+
+  const textMutedClass = theme === 'dark' 
+    ? 'tryon-text-slate-400' 
+    : 'tryon-text-slate-500';
+
+  const textHeadingClass = theme === 'dark'
+    ? 'tryon-text-slate-100'
+    : 'tryon-text-slate-900';
+
   const renderContent = () => {
     switch (status) {
       case 'idle':
         return (
           <div className="tryon-flex tryon-flex-col tryon-h-full">
-            <div className="tryon-flex tryon-border-b tryon-border-gray-100">
+            <div className={`tryon-flex tryon-border-b ${borderClass}`}>
               <button
                 onClick={() => setActiveTab('upload')}
-                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors ${
-                  activeTab === 'upload' ? 'tryon-border-b-2 tryon-border-black tryon-text-black' : 'tryon-text-gray-400'
-                }`}
+                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors`}
+                style={{
+                  borderBottom: activeTab === 'upload' ? `2px solid ${primaryColor}` : 'none',
+                  color: activeTab === 'upload' 
+                    ? (theme === 'dark' ? '#fff' : '#0f172a') 
+                    : (theme === 'dark' ? '#64748b' : '#94a3b8'),
+                }}
               >
                 <div className="tryon-flex tryon-items-center tryon-justify-center tryon-gap-2">
                   <Upload className="tryon-w-4 tryon-h-4" />
@@ -40,9 +68,13 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
               </button>
               <button
                 onClick={() => setActiveTab('camera')}
-                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors ${
-                  activeTab === 'camera' ? 'tryon-border-b-2 tryon-border-black tryon-text-black' : 'tryon-text-gray-400'
-                }`}
+                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors`}
+                style={{
+                  borderBottom: activeTab === 'camera' ? `2px solid ${primaryColor}` : 'none',
+                  color: activeTab === 'camera' 
+                    ? (theme === 'dark' ? '#fff' : '#0f172a') 
+                    : (theme === 'dark' ? '#64748b' : '#94a3b8'),
+                }}
               >
                 <div className="tryon-flex tryon-items-center tryon-justify-center tryon-gap-2">
                   <Camera className="tryon-w-4 tryon-h-4" />
@@ -101,11 +133,15 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
             <div className={`tryon-w-16 tryon-h-16 ${iconBg} ${iconColor} tryon-rounded-full tryon-flex tryon-items-center tryon-justify-center tryon-mb-5 tryon-shadow-sm`}>
               <ErrorIcon className="tryon-w-8 tryon-h-8" />
             </div>
-            <h3 className="tryon-text-lg tryon-font-semibold tryon-text-slate-900 tryon-mb-2">{errorTitle}</h3>
-            <p className="tryon-text-sm tryon-text-slate-500 tryon-max-w-xs tryon-mb-6 tryon-leading-relaxed">{errorDesc}</p>
+            <h3 className={`tryon-text-lg tryon-font-semibold tryon-mb-2 ${textHeadingClass}`}>{errorTitle}</h3>
+            <p className={`tryon-text-sm tryon-max-w-xs tryon-mb-6 tryon-leading-relaxed ${textMutedClass}`}>{errorDesc}</p>
             <button
               onClick={reset}
-              className="tryon-px-8 tryon-py-3 tryon-bg-black tryon-text-white tryon-rounded-full tryon-font-semibold tryon-text-sm tryon-transition-all tryon-active:scale-95 tryon-shadow-lg tryon-shadow-slate-950/20"
+              className="tryon-px-8 tryon-py-3 tryon-text-white tryon-font-semibold tryon-text-sm tryon-transition-all tryon-active:scale-95 tryon-shadow-lg tryon-shadow-slate-950/20"
+              style={{
+                backgroundColor: primaryColor,
+                borderRadius: radius,
+              }}
             >
               Try Again
             </button>
@@ -119,14 +155,36 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
 
   return (
     <div className="tryon-fixed tryon-inset-0 tryon-z-[10000] tryon-flex tryon-items-center tryon-justify-center tryon-bg-black/50 tryon-backdrop-blur-sm">
-      <div className="tryon-bg-white tryon-w-full tryon-h-full tryon-max-w-md tryon-md:h-[600px] tryon-md:rounded-2xl tryon-shadow-2xl tryon-overflow-hidden tryon-relative tryon-flex tryon-flex-col">
+      <div 
+        className={`${bgClass} tryon-w-full tryon-h-full tryon-max-w-md tryon-md:h-[600px] tryon-md:rounded-2xl tryon-shadow-2xl tryon-overflow-hidden tryon-relative tryon-flex tryon-flex-col`}
+        style={{
+          '--tryon-primary': primaryColor,
+          '--tryon-btn-radius': radius,
+        } as any}
+      >
         <button
           onClick={handleClose}
-          className="tryon-absolute tryon-top-4 tryon-right-4 tryon-p-2 tryon-bg-white/80 tryon-backdrop-blur tryon-rounded-full tryon-shadow-sm tryon-z-10 tryon-hover:bg-gray-100"
+          className="tryon-absolute tryon-top-3.5 tryon-right-4 tryon-p-2 tryon-rounded-full tryon-shadow-sm tryon-z-10 tryon-hover:opacity-80"
+          style={{
+            backgroundColor: theme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(241, 245, 249, 0.8)',
+            color: theme === 'dark' ? '#fff' : '#000',
+          }}
         >
-          <X className="tryon-w-5 tryon-h-5" />
+          <X className="tryon-w-4 tryon-h-4" />
         </button>
-        {renderContent()}
+        {/* Dynamic Brand Customization Logo/Header Bar */}
+        <div className={`tryon-flex tryon-items-center tryon-justify-center tryon-py-4 tryon-border-b ${borderClass}`}>
+          {config?.logoUrl ? (
+            <img src={config.logoUrl} className="tryon-h-7 tryon-object-contain" alt="Brand Logo" />
+          ) : (
+            <span className={`tryon-text-[11px] tryon-font-bold tryon-tracking-widest tryon-uppercase ${textMutedClass}`}>
+              Virtual Try-On
+            </span>
+          )}
+        </div>
+        <div className="tryon-flex-1 tryon-relative">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

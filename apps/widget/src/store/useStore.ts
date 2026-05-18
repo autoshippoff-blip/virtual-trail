@@ -15,6 +15,9 @@ interface WidgetState {
   config: {
     primaryColor: string;
     complimentTone: string;
+    logoUrl?: string | null;
+    buttonStyle?: string;
+    widgetTheme?: string;
     features: string[];
   } | null;
   runtimeConfig: {

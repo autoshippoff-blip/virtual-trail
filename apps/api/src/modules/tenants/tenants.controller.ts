@@ -11,6 +11,8 @@ export class TenantsController {
       primaryColor: tenant.primaryColor,
       complimentTone: tenant.complimentTone,
       logoUrl: tenant.logoUrl,
+      buttonStyle: tenant.buttonStyle || 'rounded',
+      widgetTheme: tenant.widgetTheme || 'light',
       features: tenant.features,
     };
   }

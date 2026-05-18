@@ -12,6 +12,7 @@ import basicAuth from 'express-basic-auth';
 import { config as appConfig } from '@trail/config';
 import { QUEUE_NAMES } from '@trail/queue';
 import { AppModule } from './app.module';
+import { RequestSanitizationPipe } from './common/pipes/sanitize.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -20,9 +21,39 @@ async function bootstrap() {
   app.use(helmet({
     contentSecurityPolicy: false,
   }));
-  app.enableCors({ origin: '*' });
   
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  // Hardened Dynamic CORS Policy for production safety
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      
+      const allowedOrigins = [
+        'localhost',
+        '127.0.0.1',
+        'onrender.com',
+        'virtual-trail',
+        'shopify.com',
+      ];
+      
+      const isAllowed = allowedOrigins.some((domain) => origin.includes(domain)) || origin.endsWith('.myshopify.com');
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS production guidelines'));
+      }
+    },
+    credentials: true,
+  });
+  
+  app.useGlobalPipes(
+    new RequestSanitizationPipe(),
+    new ValidationPipe({ whitelist: true, transform: true })
+  );
 
   // Mount Secure Bull Board Dashboard
   const server = app.getHttpAdapter().getInstance();

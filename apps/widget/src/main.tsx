@@ -3,20 +3,20 @@ import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/browser";
 import TryOnApp from './TryOnApp';
 import { useStore } from './store/useStore';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
-Sentry.init({
-  dsn: "https://c45cd055b70513e7cb0b770797d281c7@o4511407267840000.ingest.de.sentry.io/4511407277801552",
-  sendDefaultPii: true,
-  integrations: [
-    Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration()
-  ],
-  tracesSampleRate: 1.0,
-  tracePropagationTargets: ["localhost", /onrender\.com/],
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0
-});
+if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN_WIDGET) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN_WIDGET,
+    sendDefaultPii: false, // Strict: never log secrets/PII by default
+    integrations: [
+      Sentry.browserTracingIntegration(),
+    ],
+    tracesSampleRate: 1.0,
+    tracePropagationTargets: ["localhost", /onrender\.com/, /cloudflare\.com/],
+  });
+}
 
 declare global {
   interface Window {
@@ -74,7 +74,9 @@ window.TryOnWidget = {
     const root = ReactDOM.createRoot(container);
     root.render(
       <React.StrictMode>
-        <TryOnApp tenantId={tenantId} productId={productId} />
+        <ErrorBoundary tenantId={tenantId} productId={productId}>
+          <TryOnApp tenantId={tenantId} productId={productId} />
+        </ErrorBoundary>
       </React.StrictMode>
     );
   },

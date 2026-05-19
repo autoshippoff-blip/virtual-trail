@@ -86,13 +86,27 @@ const CameraTab: React.FC<CameraTabProps> = ({ productId, tenantId }) => {
         {capturedImage ? (
           <img src={capturedImage} className="tryon-w-full tryon-h-full tryon-object-cover" alt="Captured" />
         ) : (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="tryon-w-full tryon-h-full tryon-object-cover tryon-scale-x-[-1]"
-          />
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="tryon-w-full tryon-h-full tryon-object-cover tryon-scale-x-[-1]"
+            />
+            {/* Viewfinder Overlay */}
+            <div className="tryon-absolute tryon-inset-0 tryon-pointer-events-none tryon-flex tryon-items-center tryon-justify-center tryon-p-8">
+              <div className="tryon-w-full tryon-max-w-[220px] tryon-aspect-[3/4] tryon-relative">
+                <div className="tryon-absolute tryon-top-0 tryon-left-0 tryon-w-8 tryon-h-8 tryon-border-t-[3px] tryon-border-l-[3px] tryon-border-white/70 tryon-rounded-tl-xl" />
+                <div className="tryon-absolute tryon-top-0 tryon-right-0 tryon-w-8 tryon-h-8 tryon-border-t-[3px] tryon-border-r-[3px] tryon-border-white/70 tryon-rounded-tr-xl" />
+                <div className="tryon-absolute tryon-bottom-0 tryon-left-0 tryon-w-8 tryon-h-8 tryon-border-b-[3px] tryon-border-l-[3px] tryon-border-white/70 tryon-rounded-bl-xl" />
+                <div className="tryon-absolute tryon-bottom-0 tryon-right-0 tryon-w-8 tryon-h-8 tryon-border-b-[3px] tryon-border-r-[3px] tryon-border-white/70 tryon-rounded-br-xl" />
+                <div className="tryon-absolute -tryon-bottom-8 tryon-left-0 tryon-w-full tryon-text-center">
+                  <span className="tryon-text-white/80 tryon-text-[10px] tryon-font-bold tryon-uppercase tryon-tracking-[0.2em] tryon-drop-shadow-md">Face Guide</span>
+                </div>
+              </div>
+            </div>
+          </>
         )}
         <canvas ref={canvasRef} className="tryon-hidden" />
       </div>
@@ -127,10 +141,10 @@ const CameraTab: React.FC<CameraTabProps> = ({ productId, tenantId }) => {
         ) : (
           <button
             onClick={capture}
-            className="tryon-w-16 tryon-h-16 tryon-bg-white tryon-border-4 tryon-rounded-full tryon-flex tryon-items-center tryon-justify-center tryon-shadow-lg tryon-transition-all tryon-hover:scale-110 tryon-active:scale-90"
-            style={{ borderColor: primaryColor }}
+            className="tryon-group tryon-w-16 tryon-h-16 tryon-bg-white tryon-border-[3px] tryon-rounded-full tryon-flex tryon-items-center tryon-justify-center tryon-shadow-[0_0_20px_rgba(0,0,0,0.1)] tryon-transition-all tryon-hover:scale-105 tryon-active:scale-95"
+            style={{ borderColor: theme === 'dark' ? '#334155' : '#e2e8f0' }}
           >
-            <div className="tryon-w-10 tryon-h-10 tryon-bg-black tryon-rounded-full" style={{ backgroundColor: primaryColor }} />
+            <div className="tryon-w-12 tryon-h-12 tryon-rounded-full tryon-transition-all tryon-duration-300 tryon-group-hover:scale-95 tryon-shadow-inner" style={{ backgroundColor: primaryColor }} />
           </button>
         )}
       </div>

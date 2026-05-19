@@ -8,6 +8,7 @@ async function testProductMetadataCaching() {
 
   const { Redis } = await import('ioredis');
   const { config } = await import('@trail/config');
+  // @ts-ignore - TS module resolution quirks with dynamic imports in NodeNext
   const { getProductByTenantAndShopifyId, prisma } = await import('@trail/db');
 
   const redis = new Redis(config.redis.url);

@@ -33,19 +33,21 @@ const ResultView: React.FC<ResultViewProps> = ({ onClose }) => {
 
   return (
     <div className="tryon-flex tryon-flex-col tryon-h-full">
-      <div className="tryon-flex-1 tryon-relative tryon-overflow-hidden">
+      <div className="tryon-flex-1 tryon-relative tryon-overflow-hidden tryon-animate-scale-in">
         {resultImage && (
           <img 
             src={resultImage} 
-            className={`tryon-w-full tryon-h-full tryon-object-contain ${theme === 'dark' ? 'tryon-bg-slate-900' : 'tryon-bg-slate-50'}`} 
+            className={`tryon-w-full tryon-h-full tryon-object-contain tryon-shadow-[inset_0_0_20px_rgba(0,0,0,0.1)] ${theme === 'dark' ? 'tryon-bg-slate-900' : 'tryon-bg-slate-50'}`} 
             alt="Result" 
           />
         )}
         {styleScore && (
-          <div className={`tryon-absolute tryon-top-4 tryon-left-4 tryon-backdrop-blur tryon-px-3 tryon-py-1 tryon-rounded-full tryon-shadow-sm tryon-flex tryon-items-center tryon-gap-1.5 tryon-text-sm tryon-font-bold ${
-            theme === 'dark' ? 'tryon-bg-slate-900/90 tryon-text-slate-100' : 'tryon-bg-white/90 tryon-text-slate-900'
+          <div className={`tryon-absolute tryon-top-4 tryon-left-4 tryon-px-3.5 tryon-py-1.5 tryon-rounded-full tryon-shadow-lg tryon-flex tryon-items-center tryon-gap-2 tryon-text-sm tryon-font-bold tryon-backdrop-blur-md tryon-border ${
+            theme === 'dark' ? 'tryon-bg-slate-900/80 tryon-border-slate-700 tryon-text-white' : 'tryon-bg-white/80 tryon-border-white/50 tryon-text-slate-900'
           }`}>
-            <Sparkles className="tryon-w-4 tryon-h-4 tryon-text-yellow-500" />
+            <div className="tryon-w-5 tryon-h-5 tryon-rounded-full tryon-bg-gradient-to-tr tryon-from-yellow-400 tryon-to-orange-500 tryon-flex tryon-items-center tryon-justify-center tryon-shadow-sm">
+              <Sparkles className="tryon-w-3 tryon-h-3 tryon-text-white" />
+            </div>
             <span>Style Score: {styleScore}/10</span>
           </div>
         )}
@@ -63,7 +65,7 @@ const ResultView: React.FC<ResultViewProps> = ({ onClose }) => {
         <div className="tryon-flex tryon-gap-3">
           <button
             onClick={handleDownload}
-            className="tryon-flex-1 tryon-flex tryon-items-center tryon-justify-center tryon-gap-2 tryon-px-5 tryon-py-3 tryon-font-medium tryon-transition-all tryon-active:scale-95"
+            className="tryon-flex-1 tryon-flex tryon-items-center tryon-justify-center tryon-gap-2 tryon-px-5 tryon-py-3 tryon-font-medium tryon-transition-all tryon-duration-300 tryon-hover:-translate-y-0.5 tryon-hover:shadow-md tryon-active:scale-95"
             style={{
               backgroundColor: theme === 'dark' ? '#1e293b' : '#f1f5f9',
               color: theme === 'dark' ? '#fff' : '#0f172a',
@@ -75,9 +77,9 @@ const ResultView: React.FC<ResultViewProps> = ({ onClose }) => {
           </button>
           <button
             onClick={onClose}
-            className="tryon-flex-1 tryon-flex tryon-items-center tryon-justify-center tryon-gap-2 tryon-px-5 tryon-py-3 tryon-text-white tryon-font-medium tryon-transition-all tryon-active:scale-95"
+            className="tryon-flex-1 tryon-flex tryon-items-center tryon-justify-center tryon-gap-2 tryon-px-5 tryon-py-3 tryon-text-white tryon-font-medium tryon-transition-all tryon-duration-300 tryon-hover:-translate-y-0.5 tryon-hover:shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] tryon-active:scale-95 tryon-shadow-inner"
             style={{
-              backgroundColor: primaryColor,
+              background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
               borderRadius: radius,
             }}
           >

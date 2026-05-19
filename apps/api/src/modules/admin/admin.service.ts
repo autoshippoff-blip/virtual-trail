@@ -195,4 +195,79 @@ export class AdminService {
       tenants: tenantsList,
     };
   }
+
+  async getTenantById(id: string) {
+    return prisma.tenant.findUnique({
+      where: { id },
+      include: { config: true },
+    });
+  }
+
+  async updateTenant(id: string, data: { name?: string; shopifyDomain?: string; features?: string[] }) {
+    return prisma.tenant.update({
+      where: { id },
+      data,
+      include: { config: true },
+    });
+  }
+
+  async upsertTenantConfig(tenantId: string, data: any) {
+    return prisma.tenantConfig.upsert({
+      where: { tenantId },
+      update: data,
+      create: { tenantId, ...data },
+    });
+  }
+
+  async updateTenantConfig(tenantId: string, data: any) {
+    return prisma.tenantConfig.update({
+      where: { tenantId },
+      data,
+    });
+  }
+
+  async getTenantAnalytics(tenantId: string) {
+    const [productsCount, requestsCount, statusGroups, successfulRequests] = await Promise.all([
+      prisma.product.count({ where: { tenantId } }),
+      prisma.tryonRequest.count({ where: { tenantId } }),
+      prisma.tryonRequest.groupBy({
+        by: ['status'],
+        where: { tenantId },
+        _count: true,
+      }),
+      prisma.tryonRequest.findMany({
+        where: { tenantId, status: 'completed' },
+        select: { processingTimeMs: true, complimentCached: true },
+      }),
+    ]);
+
+    const statusBreakdown = statusGroups.reduce((acc, curr) => {
+      acc[curr.status] = curr._count;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const completedCount = statusBreakdown['completed'] || 0;
+    const failedCount = statusBreakdown['failed'] || 0;
+    
+    // Total tryons
+    const totalTryons = requestsCount;
+
+    // Average processing time
+    const validProcessingTimes = successfulRequests.filter(req => req.processingTimeMs !== null);
+    const totalProcessingTime = validProcessingTimes.reduce((sum, req) => sum + (req.processingTimeMs || 0), 0);
+    const avgProcessingTimeMs = validProcessingTimes.length > 0 ? totalProcessingTime / validProcessingTimes.length : 0;
+
+    // Cache hit ratio
+    const cachedCount = successfulRequests.filter(req => req.complimentCached).length;
+    const cacheHitRatio = successfulRequests.length > 0 ? (cachedCount / successfulRequests.length) * 100 : 0;
+
+    return {
+      totalTryons,
+      completedCount,
+      failedCount,
+      avgProcessingTimeMs: Math.round(avgProcessingTimeMs),
+      complimentCacheHitRate: parseFloat(cacheHitRatio.toFixed(2)),
+      activeProducts: productsCount,
+    };
+  }
 }

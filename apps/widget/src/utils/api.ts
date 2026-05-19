@@ -22,6 +22,12 @@ export async function startTryOn(tenantId: string, productId: string, userImage:
       console.log('TryOnWidget: Optimizing user upload via canvas resizing...');
     }
     optimizedImage = await resizeImageBeforeUpload(userImage);
+    if (runtimeConfig.debug) {
+      const originalSize = Math.round((userImage.length * 3) / 4);
+      const optSize = Math.round((optimizedImage.length * 3) / 4);
+      const ratio = ((1 - optSize / originalSize) * 100).toFixed(2);
+      console.log(`TryOnWidget: Optimization complete. Original: ${originalSize}B, Optimized: ${optSize}B (Saved ${ratio}%)`);
+    }
   } catch (err: any) {
     if (runtimeConfig.debug) {
       console.warn('TryOnWidget: Resizing failed, falling back to original payload size:', err.message);

@@ -1,12 +1,12 @@
-import { Controller, Post, Get, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Controller, Post, Get, Body, Param, Query, UseGuards, Req, Inject } from '@nestjs/common';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { TenantGuard } from '../../guards/tenant.guard';
 import { TryonService } from './tryon.service';
 import { CreateTryonDto, TryonResponse, TryonStatusResponse } from './tryon.dto';
 
 @Controller('v1/tryon')
 export class TryonController {
-  constructor(private readonly tryonService: TryonService) {}
+  constructor(@Inject(TryonService) private readonly tryonService: TryonService) {}
 
   @Post()
   @UseGuards(TenantGuard)
@@ -21,6 +21,7 @@ export class TryonController {
 
   @Get(':jobId')
   @UseGuards(TenantGuard)
+  @SkipThrottle({ burst: true, standard: true, tryon: true })
   async getStatus(
     @Param('jobId') jobId: string,
     @Query('tenantId') tenantId: string,

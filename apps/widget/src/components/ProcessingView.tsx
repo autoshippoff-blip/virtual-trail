@@ -66,7 +66,7 @@ const ProcessingView: React.FC = () => {
     <div className="tryon-flex tryon-flex-col tryon-items-center tryon-justify-center tryon-h-full tryon-p-6 tryon-text-center tryon-bg-slate-50/50">
       
       {/* Visual Image Scanning Card */}
-      <div className="tryon-relative tryon-w-44 tryon-h-56 tryon-mb-6 tryon-rounded-2xl tryon-overflow-hidden tryon-shadow-lg tryon-border tryon-border-slate-100 tryon-bg-white tryon-glow-container">
+      <div className="tryon-relative tryon-w-44 tryon-h-56 tryon-mb-6 tryon-rounded-2xl tryon-overflow-hidden tryon-shadow-[0_0_30px_rgba(6,182,212,0.15)] tryon-border tryon-border-white/20 tryon-bg-white/10 tryon-backdrop-blur-md tryon-glow-container">
         {userImage ? (
           <img
             src={userImage}
@@ -100,10 +100,10 @@ const ProcessingView: React.FC = () => {
         </div>
 
         {/* Realistic Progress Bar */}
-        <div className="tryon-w-full tryon-h-1.5 tryon-bg-slate-100 tryon-rounded-full tryon-overflow-hidden tryon-relative">
+        <div className="tryon-w-full tryon-h-1.5 tryon-bg-slate-200/50 tryon-backdrop-blur-sm tryon-rounded-full tryon-overflow-hidden tryon-relative tryon-shadow-inner">
           <div 
             style={{ width: `${progress}%` }} 
-            className="tryon-h-full tryon-bg-gradient-to-r tryon-from-cyan-500 tryon-to-blue-600 tryon-rounded-full tryon-transition-all tryon-duration-500 tryon-ease-out"
+            className="tryon-h-full tryon-bg-gradient-to-r tryon-from-cyan-400 tryon-to-blue-500 tryon-rounded-full tryon-transition-all tryon-duration-500 tryon-ease-out tryon-animate-shimmer tryon-shadow-[0_0_10px_rgba(6,182,212,0.5)]"
           />
         </div>
 

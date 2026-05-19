@@ -1,8 +1,10 @@
 import * as dotenv from 'dotenv';
 import { join } from 'path';
 
-// Load .env from root if it exists
+// Load .env from root or parent directories if it exists (monorepo support)
 dotenv.config({ path: join(process.cwd(), '.env') });
+dotenv.config({ path: join(process.cwd(), '..', '.env') });
+dotenv.config({ path: join(process.cwd(), '..', '..', '.env') });
 dotenv.config(); // Also check local
 
 function requireEnv(key: string): string {
@@ -30,6 +32,11 @@ export const config = {
   segmind: {
     apiKey: requireEnv('SEGMIND_API_KEY'),
   },
+  fitroom: {
+    apiKey: requireEnv('FITROOM_API_KEY'),
+    apiUrl: requireEnv('FITROOM_API_URL'),
+  },
+  aiProvider: requireEnv('AI_PROVIDER'),
   gemini: {
     apiKey: requireEnv('GEMINI_API_KEY'),
   },
@@ -48,7 +55,8 @@ export const config = {
     apiKey: requireEnv('ADMIN_API_KEY'),
   },
   sentry: {
-    dsn: process.env.SENTRY_DSN || '',
+    dsnApi: process.env.SENTRY_DSN_API || '',
+    dsnWorker: process.env.SENTRY_DSN_WORKER || '',
   },
 } as const;
 

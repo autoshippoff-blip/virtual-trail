@@ -44,6 +44,9 @@ export async function resizeImageBeforeUpload(base64Str: string, maxDim = 1024):
         return;
       }
 
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
       // Draw original image into resized canvas
       ctx.drawImage(img, 0, 0, width, height);
 

@@ -4,9 +4,9 @@ import pino from 'pino';
 import { TryonJobPayload } from '@trail/queue';
 import { updateTryonRequest } from '@trail/db';
 import { getSignedReadUrl, upload } from '@trail/storage';
-import { generateTryOn } from '@trail/ai';
-import { generateCompliment } from '@trail/ai';
+import { getProvider, generateCompliment } from '@trail/ai';
 import { config } from '@trail/config';
+import * as Sentry from '@sentry/node';
 
 const logger = pino({
   transport: { target: 'pino-pretty' },
@@ -40,7 +40,7 @@ async function withRetry<T>(
 
 export async function processTryOn(job: Job<TryonJobPayload>) {
   const start = Date.now();
-  const { requestId, tenantId, productId, productImageUrl, userImageKey, config: tenantConfig } = job.data;
+  const { requestId, tenantId, productId, productImageUrl, userImageKey, category, config: tenantConfig } = job.data;
 
   logger.info({
     requestId,
@@ -69,17 +69,27 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       logger.info({ requestId, cacheKey }, 'Compliment cache hit');
     }
 
-    // STEP 4: Call Segmind generateTryOn() with local retries
-    const segmindStart = Date.now();
-    const { imageBuffer } = await withRetry(
-      () => generateTryOn({
-        userImageUrl,
-        garmentImageUrl: productImageUrl,
+    // STEP 4: Call active provider with local retries
+    const provider = getProvider();
+    const providerStart = Date.now();
+    const result = await withRetry(
+      () => provider.generate({
+        modelImage: userImageUrl,
+        garmentImage: productImageUrl,
+        tenantId,
+        productId,
+        requestId,
+        category: category || undefined,
         model: tenantConfig.segmindModel,
       }),
-      { retries: 3, delayMs: 1000, name: 'Segmind Try-On Generation' }
+      { retries: 3, delayMs: 1000, name: `AI Try-On Generation (${provider.constructor.name})` }
     );
-    const segmindMs = Date.now() - segmindStart;
+    const providerMs = Date.now() - providerStart;
+    const imageBuffer = result.imageBuffer;
+
+    if (!imageBuffer) {
+      throw new Error(`Provider ${result.provider} returned success but no image buffer was resolved`);
+    }
 
     // STEP 5: Upload generated image to R2 with local retries
     const uploadStart = Date.now();
@@ -139,7 +149,8 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       elapsed,
       attempt: job.attemptsMade + 1,
       complimentCached,
-      segmindMs,
+      provider: result.provider,
+      providerMs,
       geminiMs,
       uploadMs,
       event: 'tryon_completed'
@@ -147,11 +158,14 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
 
   } catch (error: any) {
     const elapsed = Date.now() - start;
+    const providerName = error.provider || config.aiProvider || 'fitroom';
+
     logger.error({
       requestId,
       tenantId,
       elapsed,
       attempt: job.attemptsMade + 1,
+      provider: providerName,
       error: error.message,
       stack: error.stack,
       event: 'tryon_failed'
@@ -161,6 +175,18 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       status: 'failed',
       errorMessage: `[Attempt ${job.attemptsMade + 1}/3 failed]: ${error.message}`,
     });
+
+    if (config.sentry.dsnWorker) {
+      Sentry.withScope((scope) => {
+        scope.setTag('queue', 'tryon-queue');
+        scope.setTag('tenantId', tenantId);
+        scope.setTag('productId', productId);
+        scope.setTag('requestId', requestId);
+        scope.setTag('provider', providerName);
+        scope.setTag('attempt', (job.attemptsMade + 1).toString());
+        Sentry.captureException(error);
+      });
+    }
 
     throw error; // Re-throw for BullMQ retry strategy
   }

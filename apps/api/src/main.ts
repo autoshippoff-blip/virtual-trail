@@ -1,5 +1,5 @@
 import './instrument';
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
@@ -13,6 +13,7 @@ import { config as appConfig } from '@trail/config';
 import { QUEUE_NAMES } from '@trail/queue';
 import { AppModule } from './app.module';
 import { RequestSanitizationPipe } from './common/pipes/sanitize.pipe';
+import { SentryExceptionFilter } from './common/filters/sentry.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -54,6 +55,9 @@ async function bootstrap() {
     new RequestSanitizationPipe(),
     new ValidationPipe({ whitelist: true, transform: true })
   );
+
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new SentryExceptionFilter(httpAdapter));
 
   // Mount Secure Bull Board Dashboard
   const server = app.getHttpAdapter().getInstance();

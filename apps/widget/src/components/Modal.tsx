@@ -50,12 +50,11 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
       case 'idle':
         return (
           <div className="tryon-flex tryon-flex-col tryon-h-full">
-            <div className={`tryon-flex tryon-border-b ${borderClass}`}>
+            <div className={`tryon-flex tryon-border-b tryon-relative ${borderClass}`}>
               <button
                 onClick={() => setActiveTab('upload')}
-                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors`}
+                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors tryon-relative tryon-z-10`}
                 style={{
-                  borderBottom: activeTab === 'upload' ? `2px solid ${primaryColor}` : 'none',
                   color: activeTab === 'upload' 
                     ? (theme === 'dark' ? '#fff' : '#0f172a') 
                     : (theme === 'dark' ? '#64748b' : '#94a3b8'),
@@ -68,9 +67,8 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
               </button>
               <button
                 onClick={() => setActiveTab('camera')}
-                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors`}
+                className={`tryon-flex-1 tryon-py-4 tryon-text-sm tryon-font-medium tryon-transition-colors tryon-relative tryon-z-10`}
                 style={{
-                  borderBottom: activeTab === 'camera' ? `2px solid ${primaryColor}` : 'none',
                   color: activeTab === 'camera' 
                     ? (theme === 'dark' ? '#fff' : '#0f172a') 
                     : (theme === 'dark' ? '#64748b' : '#94a3b8'),
@@ -81,6 +79,17 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
                   Camera
                 </div>
               </button>
+              
+              {/* Sliding Indicator */}
+              <div 
+                className="tryon-absolute tryon-bottom-0 tryon-h-0.5 tryon-transition-all tryon-duration-300 tryon-ease-out"
+                style={{
+                  width: '50%',
+                  left: activeTab === 'upload' ? '0%' : '50%',
+                  backgroundColor: primaryColor,
+                  boxShadow: `0 -2px 10px ${primaryColor}40`
+                }}
+              />
             </div>
             <div className="tryon-flex-1 tryon-overflow-y-auto">
               {activeTab === 'upload' ? <UploadTab productId={productId} tenantId={tenantId} /> : <CameraTab productId={productId} tenantId={tenantId} />}
@@ -156,7 +165,7 @@ const Modal: React.FC<ModalProps> = ({ onClose, productId, tenantId }) => {
   return (
     <div className="tryon-fixed tryon-inset-0 tryon-z-[10000] tryon-flex tryon-items-center tryon-justify-center tryon-bg-black/50 tryon-backdrop-blur-sm">
       <div 
-        className={`${bgClass} tryon-w-full tryon-h-full tryon-max-w-md tryon-md:h-[600px] tryon-md:rounded-2xl tryon-shadow-2xl tryon-overflow-hidden tryon-relative tryon-flex tryon-flex-col`}
+        className={`${bgClass} tryon-w-full tryon-h-full tryon-max-w-md tryon-md:h-[600px] tryon-md:rounded-2xl tryon-shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] tryon-border ${theme === 'dark' ? 'tryon-border-slate-800' : 'tryon-border-white/50'} tryon-overflow-hidden tryon-relative tryon-flex tryon-flex-col`}
         style={{
           '--tryon-primary': primaryColor,
           '--tryon-btn-radius': radius,

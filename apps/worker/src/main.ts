@@ -14,9 +14,9 @@ const logger = pino({
 async function bootstrap() {
   logger.info('Worker starting...');
 
-  if (config.sentry.dsn) {
+  if (config.sentry.dsnWorker) {
     Sentry.init({
-      dsn: config.sentry.dsn,
+      dsn: config.sentry.dsnWorker,
       tracesSampleRate: 1.0,
       environment: process.env.NODE_ENV || 'production',
     });
@@ -56,13 +56,29 @@ async function bootstrap() {
   );
 
   tryonWorker.on('completed', (job) => {
-    logger.info({ jobId: job.id, queue: QUEUE_NAMES.TRYON }, 'Job completed');
+    const waitTimeMs = job.processedOn ? job.processedOn - job.timestamp : 0;
+    const processingTimeMs = (job.finishedOn && job.processedOn) ? job.finishedOn - job.processedOn : 0;
+    
+    if (waitTimeMs > 10000) {
+      logger.warn({ jobId: job.id, waitTimeMs, queue: QUEUE_NAMES.TRYON }, 'Worker lag detected (Queue spike)');
+    }
+
+    logger.info({ 
+      jobId: job.id, 
+      queue: QUEUE_NAMES.TRYON,
+      metrics: { waitTimeMs, processingTimeMs, attempts: job.attemptsMade }
+    }, 'Job completed');
   });
 
   tryonWorker.on('failed', async (job, err) => {
     logger.error({ jobId: job?.id, queue: QUEUE_NAMES.TRYON, err: err.message }, 'Job failed');
     
-    const isPermanent = job && job.attemptsMade >= (job.opts.attempts || 1);
+    const attemptsMade = job?.attemptsMade || 1;
+    if (attemptsMade > 1) {
+      logger.warn({ jobId: job?.id, attemptsMade }, 'Retry storm / repeated failures detected');
+    }
+    
+    const isPermanent = job && attemptsMade >= (job.opts.attempts || 1);
 
     if (isPermanent) {
       logger.error({ jobId: job.id, attemptsMade: job.attemptsMade }, 'Job PERMANENTLY failed. Moving to DLQ.');
@@ -81,7 +97,7 @@ async function bootstrap() {
       }
     }
 
-    if (config.sentry.dsn) {
+    if (config.sentry.dsnWorker) {
       Sentry.captureException(err, {
         tags: { 
           queue: QUEUE_NAMES.TRYON, 
@@ -99,7 +115,7 @@ async function bootstrap() {
 
   cleanupWorker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, queue: QUEUE_NAMES.CLEANUP, err: err.message }, 'Cleanup job failed');
-    if (config.sentry.dsn) {
+    if (config.sentry.dsnWorker) {
       Sentry.captureException(err, {
         tags: { queue: QUEUE_NAMES.CLEANUP, jobId: job?.id }
       });
@@ -109,7 +125,7 @@ async function bootstrap() {
   // Graceful shutdown
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}, shutting down...`);
-    if (config.sentry.dsn) {
+    if (config.sentry.dsnWorker) {
       await Sentry.close(2000);
     }
     await tryonWorker.close();

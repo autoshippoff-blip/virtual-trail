@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,6 +18,7 @@ import { ImageValidationError } from './tryon.errors';
 
 @Injectable()
 export class TryonService {
+  private readonly logger = new Logger(TryonService.name);
   private queue: Queue;
   private redis: Redis;
 
@@ -84,11 +85,13 @@ export class TryonService {
     const cachedProduct = await this.redis.get(productCacheKey);
     if (cachedProduct) {
       product = JSON.parse(cachedProduct);
+      this.logger.log(`[Cache Hit] Product metadata: ${productCacheKey}`);
     } else {
       product = await getProductByTenantAndShopifyId(dto.tenantId, dto.productId);
       if (product) {
         // Cache static product metadata for 10 minutes (600 seconds)
         await this.redis.set(productCacheKey, JSON.stringify(product), 'EX', 600);
+        this.logger.log(`[Cache Miss] Product metadata stored: ${productCacheKey}`);
       }
     }
 
@@ -117,6 +120,7 @@ export class TryonService {
       productId: product.id,
       productImageUrl: product.imageUrl,
       userImageKey: userImageKey,
+      category: product.category,
       config: {
         segmindModel: resolvedTenant.segmindModel,
         complimentTone: resolvedTenant.complimentTone as any,
@@ -133,8 +137,11 @@ export class TryonService {
     const responseCacheKey = `tryon:${jobId}:response`;
     const cachedResponse = await this.redis.get(responseCacheKey);
     if (cachedResponse) {
+      this.logger.debug(`[Cache Hit] Polling response: ${responseCacheKey}`);
       return JSON.parse(cachedResponse);
     }
+
+    this.logger.debug(`[Cache Miss] Polling response: ${responseCacheKey}`);
 
     // 2. Fallback: Check status cache (for backward compatibility / cold start)
     const statusCacheKey = `tryon:${jobId}:status`;

@@ -6,6 +6,7 @@ export interface TryonJobPayload {
   productId: string;
   productImageUrl: string;
   userImageKey: string;
+  category?: string | null;
   config: {
     segmindModel: string;
     complimentTone: 'friendly' | 'luxury' | 'playful';

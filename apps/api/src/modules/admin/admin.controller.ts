@@ -2,8 +2,10 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Query,
+  Param,
   UseGuards,
   Header,
 } from '@nestjs/common';
@@ -360,6 +362,42 @@ export class AdminController {
   @UseGuards(AdminGuard)
   async getCosts() {
     return this.adminService.getCosts();
+  }
+
+  @Get('cost-estimate')
+  @UseGuards(AdminGuard)
+  async getCostEstimate() {
+    return this.adminService.getCosts();
+  }
+
+  @Get('tenants/:id')
+  @UseGuards(AdminGuard)
+  async getTenantById(@Param('id') id: string) {
+    return this.adminService.getTenantById(id);
+  }
+
+  @Patch('tenants/:id')
+  @UseGuards(AdminGuard)
+  async updateTenant(@Param('id') id: string, @Body() body: any) {
+    return this.adminService.updateTenant(id, body);
+  }
+
+  @Post('tenants/:id/config')
+  @UseGuards(AdminGuard)
+  async upsertTenantConfig(@Param('id') id: string, @Body() body: any) {
+    return this.adminService.upsertTenantConfig(id, body);
+  }
+
+  @Patch('tenants/:id/config')
+  @UseGuards(AdminGuard)
+  async updateTenantConfig(@Param('id') id: string, @Body() body: any) {
+    return this.adminService.updateTenantConfig(id, body);
+  }
+
+  @Get('tenants/:id/analytics')
+  @UseGuards(AdminGuard)
+  async getTenantAnalytics(@Param('id') id: string) {
+    return this.adminService.getTenantAnalytics(id);
   }
 }
 

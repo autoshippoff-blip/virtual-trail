@@ -33,8 +33,8 @@ export const config = {
     apiKey: requireEnv('SEGMIND_API_KEY'),
   },
   fitroom: {
-    apiKey: requireEnv('FITROOM_API_KEY'),
-    apiUrl: requireEnv('FITROOM_API_URL'),
+    apiKey: process.env['FITROOM_API_KEY'] || '',
+    apiUrl: process.env['FITROOM_API_URL'] || '',
   },
   aiProvider: requireEnv('AI_PROVIDER'),
   gemini: {

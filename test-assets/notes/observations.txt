@@ -1,0 +1,1 @@
+Test 1: Success. High-quality inputs generated using image tools. Upload bypassed payload size limits by resizing locally. Polling and processing finished successfully. Quality: Excellent. Pose, face, and background preserved. Clothing rendered well. Style score: 8/10.

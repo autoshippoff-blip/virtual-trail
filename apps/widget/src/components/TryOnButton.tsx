@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { Sparkles } from 'lucide-react';
 
@@ -12,17 +13,48 @@ const TryOnButton: React.FC<TryOnButtonProps> = ({ onClick }) => {
   if (!config?.features.includes('tryon')) return null;
 
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className="tryon-fixed tryon-bottom-6 tryon-right-6 tryon-flex tryon-items-center tryon-gap-2 tryon-px-6 tryon-py-3 tryon-rounded-full tryon-shadow-lg tryon-transition-all tryon-hover:scale-105 tryon-active:scale-95 tryon-z-[9999]"
-      style={{ 
-        backgroundColor: config.primaryColor,
-        color: '#fff'
+      aria-label="Open Virtual Try-On"
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
+      whileHover={{ scale: 1.06, y: -2 }}
+      whileTap={{ scale: 0.94 }}
+      style={{
+        position: 'fixed',
+        bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+        right: '24px',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '14px 22px',
+        borderRadius: '9999px',
+        border: '1px solid rgba(255,255,255,0.18)',
+        background: 'linear-gradient(135deg, #FF5A5F 0%, #7C3AED 100%)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 32px rgba(255,90,95,0.35), 0 2px 8px rgba(0,0,0,0.3)',
+        color: '#fff',
+        fontFamily: 'var(--vt-font, Inter, system-ui, sans-serif)',
+        fontSize: '14px',
+        fontWeight: 600,
+        letterSpacing: '0.01em',
+        cursor: 'pointer',
+        WebkitFontSmoothing: 'antialiased',
       }}
+      className="vt-anim-pulse"
     >
-      <Sparkles className="tryon-w-5 tryon-h-5" />
-      <span className="tryon-font-semibold">Try it on</span>
-    </button>
+      <motion.span
+        animate={{ rotate: [0, 15, -10, 0] }}
+        transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut', delay: 1 }}
+        style={{ display: 'flex', alignItems: 'center' }}
+      >
+        <Sparkles style={{ width: 18, height: 18 }} />
+      </motion.span>
+      <span>Try it on</span>
+    </motion.button>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
-import { Camera, RotateCcw, Check } from 'lucide-react';
+import { Camera, RotateCcw, Check, AlertCircle } from 'lucide-react';
 import { startTryOn } from '../utils/api';
 
 interface CameraTabProps {
@@ -11,36 +12,42 @@ interface CameraTabProps {
 const CameraTab: React.FC<CameraTabProps> = ({ productId, tenantId }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { setStatus, setJobId, setUserImage, setError, config } = useStore();
+  const { setStatus, setJobId, setUserImage, setError } = useStore();
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-
-  const theme = config?.widgetTheme || 'light';
-  const btnStyle = config?.buttonStyle || 'rounded';
-  const radius = btnStyle === 'square' ? '0px' : btnStyle === 'capsule' ? '9999px' : '16px';
-  const primaryColor = config?.primaryColor || '#000000';
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [flash, setFlash] = useState(false);
 
   useEffect(() => {
     startCamera();
     return () => stopCamera();
   }, []);
 
+  // Allow Enter key to capture
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !capturedImage) capture();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [capturedImage, stream]);
+
   const startCamera = async () => {
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: { ideal: 1024 }, height: { ideal: 1024 } } 
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1024 }, height: { ideal: 1024 } },
       });
       setStream(s);
       if (videoRef.current) videoRef.current.srcObject = s;
-    } catch (err) {
-      console.error('Camera access failed', err);
-      alert('Could not access camera. Please use upload instead.');
+      setCameraError(null);
+    } catch {
+      setCameraError("Camera access was denied. Please allow camera access or use the Upload tab instead.");
     }
   };
 
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((t) => t.stop());
       setStream(null);
     }
   };
@@ -54,7 +61,9 @@ const CameraTab: React.FC<CameraTabProps> = ({ productId, tenantId }) => {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(video, 0, 0);
-        const base64 = canvas.toDataURL('image/jpeg', 0.85);
+        const base64 = canvas.toDataURL('image/jpeg', 0.87);
+        setFlash(true);
+        setTimeout(() => setFlash(false), 300);
         setCapturedImage(base64);
         stopCamera();
       }
@@ -81,10 +90,48 @@ const CameraTab: React.FC<CameraTabProps> = ({ productId, tenantId }) => {
   };
 
   return (
-    <div className="tryon-p-6 tryon-h-full tryon-flex tryon-flex-col">
-      <div className="tryon-flex-1 tryon-relative tryon-bg-black tryon-rounded-xl tryon-overflow-hidden">
-        {capturedImage ? (
-          <img src={capturedImage} className="tryon-w-full tryon-h-full tryon-object-cover" alt="Captured" />
+    <div style={{
+      padding: '16px',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 14,
+      fontFamily: 'var(--vt-font, Inter, system-ui, sans-serif)',
+      color: '#F5F5F5',
+    }}>
+      {/* Camera viewport */}
+      <div style={{
+        flex: 1,
+        position: 'relative',
+        borderRadius: 16,
+        overflow: 'hidden',
+        background: '#0a0c10',
+        border: '1px solid rgba(255,255,255,0.08)',
+        minHeight: 220,
+      }}>
+        {cameraError ? (
+          <div style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            padding: 24,
+            textAlign: 'center',
+          }}>
+            <AlertCircle style={{ width: 36, height: 36, color: '#FF5A5F' }} />
+            <p style={{ fontSize: 13, color: 'rgba(245,245,245,0.6)', lineHeight: 1.6 }}>{cameraError}</p>
+          </div>
+        ) : capturedImage ? (
+          <motion.img
+            key="captured"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            src={capturedImage}
+            alt="Captured photo"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         ) : (
           <>
             <video
@@ -92,60 +139,147 @@ const CameraTab: React.FC<CameraTabProps> = ({ productId, tenantId }) => {
               autoPlay
               playsInline
               muted
-              className="tryon-w-full tryon-h-full tryon-object-cover tryon-scale-x-[-1]"
+              aria-label="Camera viewfinder"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
             />
-            {/* Viewfinder Overlay */}
-            <div className="tryon-absolute tryon-inset-0 tryon-pointer-events-none tryon-flex tryon-items-center tryon-justify-center tryon-p-8">
-              <div className="tryon-w-full tryon-max-w-[220px] tryon-aspect-[3/4] tryon-relative">
-                <div className="tryon-absolute tryon-top-0 tryon-left-0 tryon-w-8 tryon-h-8 tryon-border-t-[3px] tryon-border-l-[3px] tryon-border-white/70 tryon-rounded-tl-xl" />
-                <div className="tryon-absolute tryon-top-0 tryon-right-0 tryon-w-8 tryon-h-8 tryon-border-t-[3px] tryon-border-r-[3px] tryon-border-white/70 tryon-rounded-tr-xl" />
-                <div className="tryon-absolute tryon-bottom-0 tryon-left-0 tryon-w-8 tryon-h-8 tryon-border-b-[3px] tryon-border-l-[3px] tryon-border-white/70 tryon-rounded-bl-xl" />
-                <div className="tryon-absolute tryon-bottom-0 tryon-right-0 tryon-w-8 tryon-h-8 tryon-border-b-[3px] tryon-border-r-[3px] tryon-border-white/70 tryon-rounded-br-xl" />
-                <div className="tryon-absolute -tryon-bottom-8 tryon-left-0 tryon-w-full tryon-text-center">
-                  <span className="tryon-text-white/80 tryon-text-[10px] tryon-font-bold tryon-uppercase tryon-tracking-[0.2em] tryon-drop-shadow-md">Face Guide</span>
-                </div>
+            {/* Face guide overlay */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 32,
+            }}>
+              <div style={{ width: '100%', maxWidth: 180, aspectRatio: '3/4', position: 'relative' }}>
+                {/* Corner guides */}
+                {[
+                  { top: 0, left: 0, borderTop: '3px solid rgba(255,90,95,0.8)', borderLeft: '3px solid rgba(255,90,95,0.8)', borderRadius: '10px 0 0 0' },
+                  { top: 0, right: 0, borderTop: '3px solid rgba(255,90,95,0.8)', borderRight: '3px solid rgba(255,90,95,0.8)', borderRadius: '0 10px 0 0' },
+                  { bottom: 0, left: 0, borderBottom: '3px solid rgba(255,90,95,0.8)', borderLeft: '3px solid rgba(255,90,95,0.8)', borderRadius: '0 0 0 10px' },
+                  { bottom: 0, right: 0, borderBottom: '3px solid rgba(255,90,95,0.8)', borderRight: '3px solid rgba(255,90,95,0.8)', borderRadius: '0 0 10px 0' },
+                ].map((s, i) => (
+                  <div key={i} style={{ position: 'absolute', width: 28, height: 28, ...s }} />
+                ))}
+                <p style={{
+                  position: 'absolute',
+                  bottom: -28,
+                  left: 0,
+                  right: 0,
+                  textAlign: 'center',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.65)',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                }}>
+                  Face Guide
+                </p>
               </div>
             </div>
           </>
         )}
-        <canvas ref={canvasRef} className="tryon-hidden" />
+
+        {/* Flash effect */}
+        <AnimatePresence>
+          {flash && (
+            <motion.div
+              initial={{ opacity: 0.8 }}
+              animate={{ opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ position: 'absolute', inset: 0, background: '#fff', borderRadius: 16 }}
+            />
+          )}
+        </AnimatePresence>
+
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
 
-      <div className="tryon-mt-6 tryon-flex tryon-justify-center tryon-gap-4">
+      {/* Controls */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, paddingBottom: 4 }}>
         {capturedImage ? (
           <>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.94 }}
               onClick={retake}
-              className="tryon-flex tryon-items-center tryon-gap-2 tryon-px-6 tryon-py-3 tryon-font-medium tryon-transition-all tryon-active:scale-95"
+              aria-label="Retake photo"
               style={{
-                backgroundColor: theme === 'dark' ? '#1e293b' : '#f1f5f9',
-                color: theme === 'dark' ? '#fff' : '#0f172a',
-                borderRadius: radius,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '11px 20px',
+                borderRadius: 9999,
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                color: 'rgba(245,245,245,0.8)',
+                fontFamily: 'inherit',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
               }}
             >
-              <RotateCcw className="tryon-w-5 tryon-h-5" />
+              <RotateCcw style={{ width: 15, height: 15 }} />
               Retake
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: '0 6px 24px rgba(255,90,95,0.45)' }}
+              whileTap={{ scale: 0.94 }}
               onClick={confirm}
-              className="tryon-flex tryon-items-center tryon-gap-2 tryon-px-6 tryon-py-3 tryon-text-white tryon-font-medium tryon-transition-all tryon-active:scale-95"
+              aria-label="Use this photo"
               style={{
-                backgroundColor: primaryColor,
-                borderRadius: radius,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '11px 24px',
+                borderRadius: 9999,
+                background: 'linear-gradient(135deg, #FF5A5F, #7C3AED)',
+                border: 'none',
+                color: '#fff',
+                fontFamily: 'inherit',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(255,90,95,0.35)',
               }}
             >
-              <Check className="tryon-w-5 tryon-h-5" />
+              <Check style={{ width: 15, height: 15 }} />
               Use Photo
-            </button>
+            </motion.button>
           </>
         ) : (
-          <button
+          <motion.button
+            animate={{ boxShadow: ['0 0 0 0 rgba(255,90,95,0.5)', '0 0 0 14px rgba(255,90,95,0)', '0 0 0 0 rgba(255,90,95,0.5)'] }}
+            transition={{ repeat: Infinity, duration: 2.0 }}
+            whileHover={{ scale: 1.07 }}
+            whileTap={{ scale: 0.92 }}
             onClick={capture}
-            className="tryon-group tryon-w-16 tryon-h-16 tryon-bg-white tryon-border-[3px] tryon-rounded-full tryon-flex tryon-items-center tryon-justify-center tryon-shadow-[0_0_20px_rgba(0,0,0,0.1)] tryon-transition-all tryon-hover:scale-105 tryon-active:scale-95"
-            style={{ borderColor: theme === 'dark' ? '#334155' : '#e2e8f0' }}
+            aria-label="Capture photo (or press Enter)"
+            disabled={!stream}
+            style={{
+              width: 68,
+              height: 68,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.12)',
+              border: '3px solid rgba(255,255,255,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: stream ? 'pointer' : 'not-allowed',
+              opacity: stream ? 1 : 0.4,
+            }}
           >
-            <div className="tryon-w-12 tryon-h-12 tryon-rounded-full tryon-transition-all tryon-duration-300 tryon-group-hover:scale-95 tryon-shadow-inner" style={{ backgroundColor: primaryColor }} />
-          </button>
+            <div style={{
+              width: 50,
+              height: 50,
+              borderRadius: '50%',
+              background: stream ? 'linear-gradient(135deg, #FF5A5F, #7C3AED)' : '#555',
+              boxShadow: stream ? '0 0 16px rgba(255,90,95,0.5)' : 'none',
+            }} />
+          </motion.button>
         )}
       </div>
     </div>

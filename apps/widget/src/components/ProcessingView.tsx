@@ -1,123 +1,207 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import usePolling from '../hooks/usePolling';
 
+const STATUS_MESSAGES = [
+  'Analyzing your photo…',
+  'Matching garment fit…',
+  'Generating your look…',
+  'Applying AI styling…',
+  'Adding finishing touches…',
+];
+
 const ProcessingView: React.FC = () => {
   const [progress, setProgress] = useState(0);
+  const [msgIndex, setMsgIndex] = useState(0);
   const { userImage, jobId, tenantId } = useStore();
-  
-  // Initialize polling
+
+  // Initialize polling (unchanged)
   usePolling(tenantId!, jobId);
 
-  // Realistic AI Timing Progress Simulator
+  // Realistic progress simulator
   useEffect(() => {
     let active = true;
-    
     const simulateProgress = () => {
       if (!active) return;
-      
       setProgress((prev) => {
-        if (prev >= 99) return 99; // Hold at 99% until polling returns success
-        
-        let increment = 0;
-        let nextDelay = 500;
-        
-        if (prev < 45) {
-          // Fast startup uploading files
-          increment = Math.floor(Math.random() * 8) + 4;
-          nextDelay = Math.floor(Math.random() * 300) + 200;
-        } else if (prev < 75) {
-          // AI rendering starts
-          increment = Math.floor(Math.random() * 3) + 1;
-          nextDelay = Math.floor(Math.random() * 600) + 400;
-        } else if (prev < 92) {
-          // Heavy styling pass
-          increment = Math.random() > 0.3 ? 1 : 0;
-          nextDelay = Math.floor(Math.random() * 1000) + 800;
-        } else {
-          // Finetuning compliment & background
-          increment = Math.random() > 0.8 ? 1 : 0;
-          nextDelay = Math.floor(Math.random() * 1500) + 1000;
-        }
-        
-        setTimeout(simulateProgress, nextDelay);
-        return Math.min(prev + increment, 99);
+        if (prev >= 99) return 99;
+        let inc = 0;
+        let delay = 500;
+        if (prev < 45) { inc = Math.floor(Math.random() * 8) + 4; delay = Math.floor(Math.random() * 300) + 200; }
+        else if (prev < 75) { inc = Math.floor(Math.random() * 3) + 1; delay = Math.floor(Math.random() * 600) + 400; }
+        else if (prev < 92) { inc = Math.random() > 0.3 ? 1 : 0; delay = Math.floor(Math.random() * 1000) + 800; }
+        else { inc = Math.random() > 0.8 ? 1 : 0; delay = Math.floor(Math.random() * 1500) + 1000; }
+        setTimeout(simulateProgress, delay);
+        return Math.min(prev + inc, 99);
       });
     };
-
-    // Trigger initial loop
     setTimeout(simulateProgress, 100);
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
-  // Compute text label dynamically based on progress
-  let stepText = "Uploading your photo...";
-  if (progress >= 35 && progress < 82) {
-    stepText = "Generating your look...";
-  } else if (progress >= 82) {
-    stepText = "Adding finishing touches...";
-  }
+  // Status message carousel
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMsgIndex((i) => (i + 1) % STATUS_MESSAGES.length);
+    }, 2200);
+    return () => clearInterval(id);
+  }, []);
+
+  const barColor = `linear-gradient(90deg, #FF5A5F, #7C3AED)`;
 
   return (
-    <div className="tryon-flex tryon-flex-col tryon-items-center tryon-justify-center tryon-h-full tryon-p-6 tryon-text-center tryon-bg-slate-50/50">
-      
-      {/* Visual Image Scanning Card */}
-      <div className="tryon-relative tryon-w-44 tryon-h-56 tryon-mb-6 tryon-rounded-2xl tryon-overflow-hidden tryon-shadow-[0_0_30px_rgba(6,182,212,0.15)] tryon-border tryon-border-white/20 tryon-bg-white/10 tryon-backdrop-blur-md tryon-glow-container">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        padding: '32px 24px',
+        textAlign: 'center',
+        fontFamily: 'var(--vt-font, Inter, system-ui, sans-serif)',
+        color: '#F5F5F5',
+        background: 'rgba(15,17,21,0.5)',
+      }}
+    >
+      {/* Indeterminate top progress bar */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 2,
+        overflow: 'hidden',
+        background: 'rgba(255,255,255,0.05)',
+      }}>
+        <motion.div
+          animate={{ left: ['-35%', '120%'] }}
+          transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            height: '100%',
+            width: '40%',
+            background: barColor,
+            borderRadius: 2,
+          }}
+        />
+      </div>
+
+      {/* Photo scan card */}
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.1 }}
+        style={{
+          position: 'relative',
+          width: 168,
+          height: 210,
+          borderRadius: 20,
+          overflow: 'hidden',
+          border: '1px solid rgba(255,90,95,0.25)',
+          boxShadow: '0 0 40px rgba(255,90,95,0.15), 0 8px 32px rgba(0,0,0,0.5)',
+          marginBottom: 28,
+          background: 'rgba(255,255,255,0.05)',
+        }}
+      >
         {userImage ? (
           <img
             src={userImage}
-            className="tryon-w-full tryon-h-full tryon-object-cover tryon-transition-all tryon-duration-700 tryon-blur-[0.5px]"
-            alt="Selfie"
+            alt="Your photo"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(0.4px)', opacity: 0.85 }}
           />
         ) : (
-          <div className="tryon-w-full tryon-h-full tryon-bg-slate-100 tryon-flex tryon-items-center tryon-justify-center">
-            <Sparkles className="tryon-w-8 tryon-h-8 tryon-text-slate-300 tryon-animate-pulse" />
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(135deg, rgba(255,90,95,0.08), rgba(124,58,237,0.08))',
+          }}>
+            {/* Skeleton shimmer */}
+            <div className="vt-skeleton" style={{ width: '100%', height: '100%' }} />
           </div>
         )}
-        
-        {/* Futuristic Laser Scan Line */}
-        <div className="tryon-scan-line" />
-        
-        {/* Soft Radial Gradient Vignette Overlay */}
-        <div className="tryon-absolute tryon-inset-0 tryon-bg-gradient-to-t tryon-from-slate-900/40 tryon-to-transparent" />
-      </div>
-      
-      {/* Progress Feel Details */}
-      <div className="tryon-w-full tryon-max-w-xs tryon-space-y-4">
-        
-        {/* Smooth step text transitions using CSS fadeInUp */}
-        <div className="tryon-h-7 tryon-overflow-hidden">
-          <h3 
-            key={stepText} 
-            className="tryon-text-sm tryon-font-semibold tryon-text-slate-800 tryon-fade-in-up"
+        {/* Scan line */}
+        <div className="vt-scan-line" />
+        {/* Gradient overlay */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to top, rgba(15,17,21,0.55) 0%, transparent 60%)',
+        }} />
+      </motion.div>
+
+      {/* Animated status messages */}
+      <div style={{ height: 24, overflow: 'hidden', marginBottom: 20, width: '100%' }}>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={msgIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.35 }}
+            style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F5', letterSpacing: '0.01em' }}
           >
-            {stepText}
-          </h3>
-        </div>
-
-        {/* Realistic Progress Bar */}
-        <div className="tryon-w-full tryon-h-1.5 tryon-bg-slate-200/50 tryon-backdrop-blur-sm tryon-rounded-full tryon-overflow-hidden tryon-relative tryon-shadow-inner">
-          <div 
-            style={{ width: `${progress}%` }} 
-            className="tryon-h-full tryon-bg-gradient-to-r tryon-from-cyan-400 tryon-to-blue-500 tryon-rounded-full tryon-transition-all tryon-duration-500 tryon-ease-out tryon-animate-shimmer tryon-shadow-[0_0_10px_rgba(6,182,212,0.5)]"
-          />
-        </div>
-
-        {/* Dynamic percentage display */}
-        <div className="tryon-flex tryon-justify-between tryon-items-center tryon-text-[11px] tryon-text-slate-400 font-medium px-0.5">
-          <span>Virtual Try-On Engine</span>
-          <span className="tryon-text-cyan-600 tryon-font-bold">{progress}%</span>
-        </div>
+            {STATUS_MESSAGES[msgIndex]}
+          </motion.p>
+        </AnimatePresence>
       </div>
-      
-      <p className="tryon-mt-8 tryon-text-[11px] tryon-text-slate-400 tryon-max-w-[240px] tryon-leading-relaxed">
-        AI model is tailoring the look. Usually takes 15-25 seconds to compile.
+
+      {/* Determinate progress bar */}
+      <div style={{
+        width: '100%',
+        maxWidth: 260,
+        height: 5,
+        borderRadius: 9999,
+        background: 'rgba(255,255,255,0.08)',
+        overflow: 'hidden',
+        marginBottom: 10,
+      }}>
+        <motion.div
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          style={{
+            height: '100%',
+            background: barColor,
+            borderRadius: 9999,
+            boxShadow: '0 0 8px rgba(255,90,95,0.5)',
+          }}
+        />
+      </div>
+
+      {/* Percentage */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        maxWidth: 260,
+        marginBottom: 24,
+      }}>
+        <span style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)', fontWeight: 500 }}>AI Engine</span>
+        <motion.span
+          key={progress}
+          initial={{ opacity: 0.4 }}
+          animate={{ opacity: 1 }}
+          style={{ fontSize: 11, fontWeight: 700, color: '#FF5A5F' }}
+        >
+          {progress}%
+        </motion.span>
+      </div>
+
+      {/* Footer note */}
+      <p style={{
+        fontSize: 11,
+        color: 'rgba(245,245,245,0.3)',
+        maxWidth: 220,
+        lineHeight: 1.7,
+      }}>
+        AI is tailoring your look. Usually takes 15–25 seconds.
       </p>
-    </div>
+    </motion.div>
   );
 };
 

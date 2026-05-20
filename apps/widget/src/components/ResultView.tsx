@@ -1,98 +1,239 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
-import { Download, Sparkles } from 'lucide-react';
+import { Download, Sparkles, RefreshCcw, X } from 'lucide-react';
 
 interface ResultViewProps {
   onClose: () => void;
 }
 
 const ResultView: React.FC<ResultViewProps> = ({ onClose }) => {
-  const { resultImage, compliment, styleScore, config } = useStore();
-  const theme = config?.widgetTheme || 'light';
-  const btnStyle = config?.buttonStyle || 'rounded';
-  const radius = btnStyle === 'square' ? '0px' : btnStyle === 'capsule' ? '9999px' : '16px';
-  const primaryColor = config?.primaryColor || '#000000';
+  const { resultImage, compliment, styleScore, reset } = useStore();
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!resultImage) return;
-    try {
-      const response = await fetch(resultImage);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'tryon-result.jpg';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      console.error('Download failed', err);
-    }
+    const a = document.createElement('a');
+    a.href = resultImage;
+    a.download = 'tryon-result.jpg';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleRetry = () => {
+    reset();
   };
 
   return (
-    <div className="tryon-flex tryon-flex-col tryon-h-full">
-      <div className="tryon-flex-1 tryon-relative tryon-overflow-hidden tryon-animate-scale-in">
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      fontFamily: 'var(--vt-font, Inter, system-ui, sans-serif)',
+      color: '#F5F5F5',
+      background: 'rgba(15,17,21,0.5)',
+    }}>
+      {/* Image reveal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 1.04 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }}
+      >
         {resultImage && (
-          <img 
-            src={resultImage} 
-            className={`tryon-w-full tryon-h-full tryon-object-contain tryon-shadow-[inset_0_0_20px_rgba(0,0,0,0.1)] ${theme === 'dark' ? 'tryon-bg-slate-900' : 'tryon-bg-slate-50'}`} 
-            alt="Result" 
+          <img
+            src={resultImage}
+            alt="Try-on result"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              background: '#0a0c10',
+            }}
           />
         )}
+
+        {/* Style score badge */}
         {styleScore && (
-          <div className={`tryon-absolute tryon-top-4 tryon-left-4 tryon-px-3.5 tryon-py-1.5 tryon-rounded-full tryon-shadow-lg tryon-flex tryon-items-center tryon-gap-2 tryon-text-sm tryon-font-bold tryon-backdrop-blur-md tryon-border ${
-            theme === 'dark' ? 'tryon-bg-slate-900/80 tryon-border-slate-700 tryon-text-white' : 'tryon-bg-white/80 tryon-border-white/50 tryon-text-slate-900'
-          }`}>
-            <div className="tryon-w-5 tryon-h-5 tryon-rounded-full tryon-bg-gradient-to-tr tryon-from-yellow-400 tryon-to-orange-500 tryon-flex tryon-items-center tryon-justify-center tryon-shadow-sm">
-              <Sparkles className="tryon-w-3 tryon-h-3 tryon-text-white" />
+          <motion.div
+            initial={{ opacity: 0, y: -12, scale: 0.85 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.4, type: 'spring', stiffness: 280, damping: 22 }}
+            style={{
+              position: 'absolute',
+              top: 14,
+              left: 14,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 9999,
+              background: 'rgba(15,17,21,0.75)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#F5F5F5',
+            }}
+          >
+            <div style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FFB800, #FF5A5F)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Sparkles style={{ width: 11, height: 11, color: '#fff' }} />
             </div>
-            <span>Style Score: {styleScore}/10</span>
-          </div>
+            Style Score: {styleScore}/10
+          </motion.div>
         )}
-      </div>
 
-      <div className={`tryon-p-5 tryon-border-t ${theme === 'dark' ? 'tryon-bg-slate-950 tryon-border-slate-800' : 'tryon-bg-white tryon-border-gray-100'}`}>
-        <div className="tryon-mb-5">
-          <p className={`tryon-text-sm tryon-font-medium tryon-italic tryon-leading-relaxed ${
-            theme === 'dark' ? 'tryon-text-slate-200' : 'tryon-text-slate-800'
-          }`}>
+        {/* Gradient vignette */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 80,
+          background: 'linear-gradient(to top, rgba(15,17,21,0.9) 0%, transparent 100%)',
+          pointerEvents: 'none',
+        }} />
+      </motion.div>
+
+      {/* Bottom panel */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          padding: '18px 20px calc(18px + env(safe-area-inset-bottom, 0px))',
+          borderTop: '1px solid rgba(255,255,255,0.07)',
+          background: 'rgba(15,17,21,0.95)',
+          flexShrink: 0,
+        }}
+      >
+        {/* Compliment */}
+        {compliment && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            style={{
+              fontSize: 13,
+              fontStyle: 'italic',
+              fontWeight: 500,
+              lineHeight: 1.65,
+              color: 'rgba(245,245,245,0.75)',
+              marginBottom: 16,
+              padding: '10px 14px',
+              borderRadius: 10,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.07)',
+            }}
+          >
             "{compliment}"
-          </p>
-        </div>
+          </motion.p>
+        )}
 
-        <div className="tryon-flex tryon-gap-3">
-          <button
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          {/* Download */}
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.94 }}
             onClick={handleDownload}
-            className="tryon-flex-1 tryon-flex tryon-items-center tryon-justify-center tryon-gap-2 tryon-px-5 tryon-py-3 tryon-font-medium tryon-transition-all tryon-duration-300 tryon-hover:-translate-y-0.5 tryon-hover:shadow-md tryon-active:scale-95"
+            aria-label="Download result image"
             style={{
-              backgroundColor: theme === 'dark' ? '#1e293b' : '#f1f5f9',
-              color: theme === 'dark' ? '#fff' : '#0f172a',
-              borderRadius: radius,
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 7,
+              padding: '12px 0',
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              color: 'rgba(245,245,245,0.85)',
+              fontFamily: 'inherit',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
             }}
           >
-            <Download className="tryon-w-4 tryon-h-4" />
+            <Download style={{ width: 15, height: 15 }} />
             Download
-          </button>
-          <button
-            onClick={onClose}
-            className="tryon-flex-1 tryon-flex tryon-items-center tryon-justify-center tryon-gap-2 tryon-px-5 tryon-py-3 tryon-text-white tryon-font-medium tryon-transition-all tryon-duration-300 tryon-hover:-translate-y-0.5 tryon-hover:shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] tryon-active:scale-95 tryon-shadow-inner"
+          </motion.button>
+
+          {/* Retry */}
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={handleRetry}
+            aria-label="Try again"
             style={{
-              background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
-              borderRadius: radius,
+              width: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 0',
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              color: 'rgba(245,245,245,0.6)',
+              fontFamily: 'inherit',
+              cursor: 'pointer',
             }}
           >
+            <RefreshCcw style={{ width: 15, height: 15 }} />
+          </motion.button>
+
+          {/* Close / Perfect CTA */}
+          <motion.button
+            whileHover={{ scale: 1.04, boxShadow: '0 8px 28px rgba(255,90,95,0.45)' }}
+            whileTap={{ scale: 0.94 }}
+            onClick={onClose}
+            aria-label="Close and keep look"
+            style={{
+              flex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 7,
+              padding: '12px 0',
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, #FF5A5F, #7C3AED)',
+              border: 'none',
+              color: '#fff',
+              fontFamily: 'inherit',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(255,90,95,0.35)',
+            }}
+          >
+            <Sparkles style={{ width: 14, height: 14 }} />
             Perfect!
-          </button>
+          </motion.button>
         </div>
 
-        <div className="tryon-mt-4 tryon-text-center">
-          <span className={`tryon-text-[9px] tryon-uppercase tryon-tracking-widest ${theme === 'dark' ? 'tryon-text-slate-600' : 'tryon-text-slate-300'}`}>
-            Powered by Virtual-Trail AI
-          </span>
-        </div>
-      </div>
+        {/* Powered-by footer */}
+        <p style={{
+          marginTop: 14,
+          textAlign: 'center',
+          fontSize: 10,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'rgba(245,245,245,0.2)',
+        }}>
+          Powered by Virtual‑Trail AI
+        </p>
+      </motion.div>
     </div>
   );
 };

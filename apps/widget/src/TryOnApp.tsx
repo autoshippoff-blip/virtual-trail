@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useStore } from './store/useStore';
 import TryOnButton from './components/TryOnButton';
 import Modal from './components/Modal';
@@ -9,7 +10,7 @@ interface TryOnAppProps {
 }
 
 const MOCK_CONFIG = {
-  primaryColor: '#000000',
+  primaryColor: '#FF5A5F',
   complimentTone: 'friendly',
   features: ['tryon']
 };
@@ -28,17 +29,12 @@ const TryOnApp: React.FC<TryOnAppProps> = ({ tenantId, productId }) => {
         const response = await fetch(`${runtimeConfig.apiUrl}/v1/tenant/${tenantId}/config`);
         if (!response.ok) throw new Error('Failed to fetch config');
         const data = await response.json();
-        
-        if (runtimeConfig.debug) {
-          console.log('TryOnWidget: Config loaded', data);
-        }
+        if (runtimeConfig.debug) console.log('TryOnWidget: Config loaded', data);
         setConfig(data);
       } catch (error) {
         console.error('TryOnWidget: Config fetch failed', error);
         if (runtimeConfig.useMock) {
-          if (runtimeConfig.debug) {
-            console.log('TryOnWidget: Using mock config');
-          }
+          if (runtimeConfig.debug) console.log('TryOnWidget: Using mock config');
           setConfig(MOCK_CONFIG);
         }
       }
@@ -54,7 +50,16 @@ const TryOnApp: React.FC<TryOnAppProps> = ({ tenantId, productId }) => {
   return (
     <div className="tryon-widget-container">
       <TryOnButton onClick={() => setIsModalOpen(true)} />
-      {isModalOpen && <Modal onClose={() => setIsModalOpen(false)} productId={productId} tenantId={tenantId} />}
+      <AnimatePresence>
+        {isModalOpen && (
+          <Modal
+            key="modal"
+            onClose={() => setIsModalOpen(false)}
+            productId={productId}
+            tenantId={tenantId}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

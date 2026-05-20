@@ -18,7 +18,7 @@
 
 <div class="controls">
   <button onclick="initMock()">Init Mock Mode (Debug On)</button>
-  <button onclick="initLiveWrongUrl()">Init Live (Wrong URL - Should Error)</button>
+  <button onclick="initLive()">Init Live (Real API)</button>
   <button onclick="initMissingParams()">Init (Missing Params - Should Error)</button>
 </div>
 
@@ -51,19 +51,21 @@
     }
   }
 
-  function initLiveWrongUrl() {
-    log('Initializing in LIVE mode with invalid URL...');
+  <button onclick="initLiveDenim()">Init Live Denim (Second Test)</button>
+
+  function initLiveDenim() {
+    log('Initializing Live Denim test...');
     try {
       TryOnWidget.init({
         tenantId: "demo-tenant",
-        productId: "premium-jacket",
-        apiUrl: "http://localhost:9999", // Invalid port
+        productId: "denim-jacket",
+        apiUrl: "http://localhost:3000",
         useMock: false,
-        debug: true
+        debug: true,
       });
-      log('Initialization call successful. Fetch will likely fail in console.', 'success');
+      log('Initialization for denim product successful.', 'success');
     } catch (e) {
-      log('Error during init: ' + e.message, 'error');
+      log('Error during denim init: ' + e.message, 'error');
     }
   }
 

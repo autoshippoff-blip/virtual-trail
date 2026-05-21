@@ -77,6 +77,34 @@ export async function createProduct(data: Prisma.ProductUncheckedCreateInput) {
   return prisma.product.create({ data });
 }
 
+export async function updateProductGarmentImageOverride(tenantId: string, shopifyProductId: string, imageUrl: string | null) {
+  return prisma.product.update({
+    where: {
+      tenantId_shopifyProductId: {
+        tenantId,
+        shopifyProductId,
+      },
+    },
+    data: {
+      preferredGarmentImage: imageUrl,
+    },
+  });
+}
+
+export async function updateProductSyncedImages(tenantId: string, shopifyProductId: string, images: any[]) {
+  return prisma.product.update({
+    where: {
+      tenantId_shopifyProductId: {
+        tenantId,
+        shopifyProductId,
+      },
+    },
+    data: {
+      images: images as any,
+    },
+  });
+}
+
 export async function createAuditLog(data: Prisma.AuditLogUncheckedCreateInput) {
   return prisma.auditLog.create({ data });
 }

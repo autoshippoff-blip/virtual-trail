@@ -132,7 +132,7 @@ export class AdminController {
           </div>
           <div>
             <h2 id="stat-cost" class="font-outfit font-bold text-4xl mt-2 tracking-tight text-emerald-400">$0.00</h2>
-            <p class="text-xs text-slate-500 mt-1">Segmind GPU + Gemini LLM fees</p>
+            <p class="text-xs text-slate-500 mt-1">Fittroom GPU + Gemini LLM fees</p>
           </div>
         </div>
 
@@ -187,11 +187,11 @@ export class AdminController {
           <table class="w-full text-left text-xs border-collapse">
             <thead>
               <tr class="border-b border-white/5 text-slate-500 font-outfit uppercase font-semibold">
-                <th class="pb-3 pl-2">Merchant</th>
-                <th class="pb-3">Shopify Store</th>
+                <th class="pb-3 pl-2">Merchant Name</th>
+                <th class="pb-3">Shopify Domain</th>
                 <th class="pb-3 text-center">Requests</th>
                 <th class="pb-3 text-center">Completed</th>
-                <th class="pb-3 text-center font-semibold">Segmind GPU</th>
+                <th class="pb-3 text-center font-semibold">Fittroom GPU</th>
                 <th class="pb-3 text-center font-semibold">Gemini LLM</th>
                 <th class="pb-3 text-center text-yellow-400">Redis Savings</th>
                 <th class="pb-3 pr-2 text-right">Total Cost</th>
@@ -235,7 +235,7 @@ export class AdminController {
         new Chart(document.getElementById('costChart'), {
           type: 'doughnut',
           data: {
-            labels: ['Segmind Try-On GPU', 'Gemini Flash text LLM'],
+            labels: ['Fittroom Try-On GPU', 'Gemini Flash text LLM'],
             datasets: [{
               data: [costsRes.summary.totalSegmindCost, costsRes.summary.totalGeminiCost],
               backgroundColor: ['#8A2BE2', '#00F5FF'],
@@ -295,7 +295,7 @@ export class AdminController {
           row.className = 'hover:bg-white/[0.02] transition-colors';
           row.innerHTML = \`
             <td class="py-4 pl-2 font-semibold text-white font-outfit">\${t.tenantName}</td>
-            <td class="py-4 text-slate-400">\${t.tenantId.substring(0, 8)}...</td>
+            <td class="py-4 text-slate-400 font-mono">\${t.shopifyDomain || 'N/A'}</td>
             <td class="py-4 text-center font-medium">\${t.totalRequests}</td>
             <td class="py-4 text-center text-emerald-400 font-medium">\${t.completedRequests}</td>
             <td class="py-4 text-center font-medium text-purple-400">\$\${t.segmindCost.toFixed(3)}</td>
@@ -398,6 +398,21 @@ export class AdminController {
   @UseGuards(AdminGuard)
   async getTenantAnalytics(@Param('id') id: string) {
     return this.adminService.getTenantAnalytics(id);
+  }
+
+  @Post('products/:id/preferred-image')
+  @UseGuards(AdminGuard)
+  async setPreferredGarmentImage(
+    @Param('id') id: string,
+    @Body('imageUrl') imageUrl: string
+  ) {
+    return this.adminService.setPreferredGarmentImage(id, imageUrl);
+  }
+
+  @Get('products/:id/guidance')
+  @UseGuards(AdminGuard)
+  async getImageSelectionGuidance() {
+    return this.adminService.getImageSelectionGuidance();
   }
 }
 

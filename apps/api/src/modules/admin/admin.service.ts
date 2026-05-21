@@ -114,12 +114,13 @@ export class AdminService {
         tenantId: true,
         status: true,
         complimentCached: true,
-        tenant: { select: { name: true } },
+        tenant: { select: { name: true, shopifyDomain: true } },
       },
     });
 
     const costByTenant: Record<string, {
       tenantName: string;
+      shopifyDomain: string;
       totalRequests: number;
       completedRequests: number;
       failedRequests: number;
@@ -137,6 +138,7 @@ export class AdminService {
       if (!costByTenant[req.tenantId]) {
         costByTenant[req.tenantId] = {
           tenantName: req.tenant.name,
+          shopifyDomain: req.tenant.shopifyDomain,
           totalRequests: 0,
           completedRequests: 0,
           failedRequests: 0,
@@ -209,6 +211,19 @@ export class AdminService {
       data,
       include: { config: true },
     });
+  }
+
+  async setPreferredGarmentImage(productId: string, imageUrl: string) {
+    return prisma.product.update({
+      where: { id: productId },
+      data: { preferredGarmentImage: imageUrl },
+    });
+  }
+
+  async getImageSelectionGuidance() {
+    return {
+      message: 'For best AI try-on results, upload at least one product image with only the garment on a plain background.',
+    };
   }
 
   async upsertTenantConfig(tenantId: string, data: any) {

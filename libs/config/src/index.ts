@@ -46,6 +46,7 @@ export const config = {
   shopify: {
     apiKey: requireEnv('SHOPIFY_API_KEY'),
     apiSecret: requireEnv('SHOPIFY_API_SECRET'),
+    appUrl: requireEnv('SHOPIFY_APP_URL'),
     scopes: process.env['SHOPIFY_SCOPES'] || 'read_products,write_script_tags',
   },
   jwt: {

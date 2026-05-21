@@ -1,0 +1,376 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { Redis } from 'ioredis';
+import axios from 'axios';
+import { config as appConfig } from '@trail/config';
+import { prisma } from '@trail/db';
+import { selectBestGarmentImage, ProductImage } from '@trail/ai';
+
+@Injectable()
+export class ShopifyService {
+  private readonly logger = new Logger(ShopifyService.name);
+  private readonly redis: Redis;
+
+  constructor() {
+    this.redis = new Redis(appConfig.redis.url, { maxRetriesPerRequest: null });
+  }
+
+  /**
+   * Checks if we are running in local mock mode.
+   */
+  isMockMode(): boolean {
+    return (
+      appConfig.shopify.apiKey === 'mock_client_id_placeholder' ||
+      appConfig.shopify.apiSecret === 'mock_client_secret_placeholder' ||
+      process.env.MOCK_SHOPIFY === 'true'
+    );
+  }
+
+  /**
+   * Auto-onboard tenant and tenant config in Neon database.
+   */
+  async onboardTenant(shop: string) {
+    // Sanitize shop domain to create a tenant ID (e.g. store-name)
+    const tenantId = shop.replace('.myshopify.com', '').toLowerCase();
+
+    this.logger.log(`Onboarding tenant: ${tenantId} for shop: ${shop}`);
+
+    const tenant = await prisma.tenant.upsert({
+      where: { shopifyDomain: shop },
+      update: { features: ['tryon'] },
+      create: {
+        id: tenantId,
+        name: shop,
+        shopifyDomain: shop,
+        features: ['tryon'],
+      },
+    });
+
+    await prisma.tenantConfig.upsert({
+      where: { tenantId: tenant.id },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        primaryColor: '#000000',
+        complimentTone: 'friendly',
+        segmindModel: 'fashion-tryon-v1',
+        buttonStyle: 'rounded',
+        widgetTheme: 'light',
+      },
+    });
+
+    return tenant;
+  }
+
+  /**
+   * Exchanges OAuth authorization code for Shopify access token.
+   */
+  async exchangeOAuthCode(shop: string, code: string): Promise<string> {
+    if (this.isMockMode()) {
+      this.logger.log(`[MOCK] Exchanging code: ${code} for shop: ${shop}`);
+      return 'shpat_mock_access_token_12345';
+    }
+
+    const url = `https://${shop}/admin/oauth/access_token`;
+    const payload = {
+      client_id: appConfig.shopify.apiKey,
+      client_secret: appConfig.shopify.apiSecret,
+      code,
+    };
+
+    try {
+      const response = await axios.post(url, payload, { timeout: 10000 });
+      if (response.data && response.data.access_token) {
+        return response.data.access_token;
+      }
+      throw new Error('Access token missing from Shopify response');
+    } catch (err: any) {
+      this.logger.error(`OAuth exchange failed for ${shop}: ${err.message}`);
+      throw err;
+    }
+  }
+
+  /**
+   * Persists the access token to Redis with 24h expiry.
+   */
+  async saveAccessToken(shop: string, token: string): Promise<void> {
+    const redisKey = `shopify:${shop}:token`;
+    await this.redis.set(redisKey, token, 'EX', 86400);
+  }
+
+  /**
+   * Gets the active access token for a store from Redis.
+   */
+  async getAccessToken(shop: string): Promise<string | null> {
+    const redisKey = `shopify:${shop}:token`;
+    const token = await this.redis.get(redisKey);
+    if (!token && this.isMockMode()) {
+      return 'shpat_mock_access_token_12345';
+    }
+    return token;
+  }
+
+  /**
+   * Inject or update storefront widget.js ScriptTag on Shopify store.
+   */
+  async injectScriptTag(shop: string, token: string): Promise<void> {
+    const widgetUrl = appConfig.widget.publicUrl;
+
+    if (this.isMockMode()) {
+      this.logger.log(`[MOCK] Injecting ScriptTag: ${widgetUrl} into ${shop}`);
+      return;
+    }
+
+    const getUrl = `https://${shop}/admin/api/2024-01/script_tags.json`;
+    const headers = { 'X-Shopify-Access-Token': token };
+
+    try {
+      const existingRes = await axios.get(getUrl, { headers, timeout: 10000 });
+      const scriptTags = existingRes.data.script_tags || [];
+      const alreadyInjected = scriptTags.some((tag: any) => tag.src === widgetUrl);
+
+      if (alreadyInjected) {
+        this.logger.log(`ScriptTag already present on ${shop}`);
+        return;
+      }
+
+      const postUrl = `https://${shop}/admin/api/2024-01/script_tags.json`;
+      const payload = {
+        script_tag: {
+          event: 'onload',
+          src: widgetUrl,
+        },
+      };
+
+      await axios.post(postUrl, payload, { headers, timeout: 10000 });
+      this.logger.log(`Successfully injected ScriptTag into ${shop}`);
+    } catch (err: any) {
+      this.logger.error(`ScriptTag injection failed for ${shop}: ${err.message}`);
+    }
+  }
+
+  /**
+   * Removes widget.js ScriptTag from Shopify store.
+   */
+  async removeScriptTag(shop: string, token: string): Promise<void> {
+    const widgetUrl = appConfig.widget.publicUrl;
+
+    if (this.isMockMode()) {
+      this.logger.log(`[MOCK] Removing ScriptTag from ${shop}`);
+      return;
+    }
+
+    const getUrl = `https://${shop}/admin/api/2024-01/script_tags.json`;
+    const headers = { 'X-Shopify-Access-Token': token };
+
+    try {
+      const existingRes = await axios.get(getUrl, { headers, timeout: 10000 });
+      const scriptTags = existingRes.data.script_tags || [];
+      const targetTags = scriptTags.filter((tag: any) => tag.src === widgetUrl);
+
+      for (const tag of targetTags) {
+        const deleteUrl = `https://${shop}/admin/api/2024-01/script_tags/${tag.id}.json`;
+        await axios.delete(deleteUrl, { headers, timeout: 10000 });
+      }
+      this.logger.log(`Successfully removed ScriptTag(s) from ${shop}`);
+    } catch (err: any) {
+      this.logger.error(`ScriptTag removal failed for ${shop}: ${err.message}`);
+    }
+  }
+
+  /**
+   * Registers webhook endpoints for essential event topics.
+   */
+  async registerWebhooks(shop: string, token: string): Promise<void> {
+    const webhookUrl = `${appConfig.shopify.appUrl}/shopify/webhooks`;
+    const topics = [
+      'app/uninstalled',
+      'products/create',
+      'products/update',
+      'products/delete',
+    ];
+
+    if (this.isMockMode()) {
+      this.logger.log(`[MOCK] Registering webhooks: [${topics.join(', ')}] at ${webhookUrl} for ${shop}`);
+      return;
+    }
+
+    const headers = { 'X-Shopify-Access-Token': token };
+    const getUrl = `https://${shop}/admin/api/2024-01/webhooks.json`;
+
+    try {
+      const existingRes = await axios.get(getUrl, { headers, timeout: 10000 });
+      const webhooks = existingRes.data.webhooks || [];
+
+      for (const topic of topics) {
+        const alreadyRegistered = webhooks.some(
+          (wh: any) => wh.topic === topic && wh.address === webhookUrl
+        );
+
+        if (alreadyRegistered) {
+          continue;
+        }
+
+        const postUrl = `https://${shop}/admin/api/2024-01/webhooks.json`;
+        const payload = {
+          webhook: {
+            topic,
+            address: webhookUrl,
+            format: 'json',
+          },
+        };
+
+        await axios.post(postUrl, payload, { headers, timeout: 10000 });
+      }
+      this.logger.log(`Successfully registered webhooks for ${shop}`);
+    } catch (err: any) {
+      this.logger.error(`Webhook registration failed for ${shop}: ${err.message}`);
+    }
+  }
+
+  /**
+   * Fetches product catalog from Shopify and syncs it locally.
+   */
+  async syncProducts(tenantId: string, shop: string, token: string): Promise<void> {
+    this.logger.log(`Starting product sync for tenant: ${tenantId}`);
+
+    let products: any[] = [];
+
+    if (this.isMockMode()) {
+      products = this.generateMockProducts();
+    } else {
+      const url = `https://${shop}/admin/api/2024-01/products.json?limit=50`;
+      const headers = { 'X-Shopify-Access-Token': token };
+      try {
+        const response = await axios.get(url, { headers, timeout: 10000 });
+        products = response.data.products || [];
+      } catch (err: any) {
+        this.logger.error(`Failed to fetch Shopify products for sync: ${err.message}`);
+        throw err;
+      }
+    }
+
+    for (const prod of products) {
+      await this.syncSingleProduct(tenantId, prod);
+    }
+    this.logger.log(`Product sync completed for tenant: ${tenantId}. Synced ${products.length} products.`);
+  }
+
+  /**
+   * Synchronizes or updates a single product record using selection heuristics.
+   */
+  async syncSingleProduct(tenantId: string, shopifyProduct: any): Promise<void> {
+    const shopifyProductId = String(shopifyProduct.id);
+
+    // Map shopify images to ProductImage structure
+    const rawImages = shopifyProduct.images || [];
+    const images: ProductImage[] = rawImages.map((img: any) => ({
+      position: img.position,
+      url: img.src || img.url,
+      altText: img.alt || '',
+      id: img.id,
+      metadata: img.metadata,
+    }));
+
+    let bestImageUrl = '';
+
+    if (images.length > 0) {
+      // Execute smart garment image selection heuristics
+      const bestImageSelection = selectBestGarmentImage(images);
+      if (bestImageSelection && bestImageSelection.image) {
+        bestImageUrl = bestImageSelection.image.url || bestImageSelection.image.src || '';
+        this.logger.debug(
+          `Selected best image for product ${shopifyProductId}: ${bestImageUrl} (Score: ${bestImageSelection.score})`
+        );
+      } else {
+        bestImageUrl = shopifyProduct.image?.src || '';
+      }
+    } else {
+      bestImageUrl = shopifyProduct.image?.src || '';
+    }
+
+    // Upsert product in database
+    await prisma.product.upsert({
+      where: {
+        tenantId_shopifyProductId: {
+          tenantId,
+          shopifyProductId,
+        },
+      },
+      update: {
+        imageUrl: bestImageUrl,
+        images: images as any,
+      },
+      create: {
+        tenantId,
+        shopifyProductId,
+        imageUrl: bestImageUrl,
+        images: images as any,
+      },
+    });
+  }
+
+  /**
+   * Generates sample product objects representing various selection scenarios.
+   */
+  private generateMockProducts(): any[] {
+    return [
+      {
+        id: 1001,
+        title: 'Mock Denim Jacket',
+        image: { src: 'https://example.com/denim_lifestyle.jpg' },
+        images: [
+          {
+            id: 1101,
+            position: 1,
+            src: 'https://example.com/denim_lifestyle.jpg',
+            alt: 'Lifestyle model wearing denim jacket',
+          },
+          {
+            id: 1102,
+            position: 2,
+            src: 'https://example.com/denim_flatlay.jpg',
+            alt: 'Flat lay denim jacket on plain background',
+          },
+        ],
+      },
+      {
+        id: 1002,
+        title: 'Mock Classic Tee',
+        image: { src: 'https://example.com/tee_model.jpg' },
+        images: [
+          {
+            id: 1201,
+            position: 1,
+            src: 'https://example.com/tee_model.jpg',
+            alt: 'Model wearing tee shirt',
+          },
+          {
+            id: 1202,
+            position: 2,
+            src: 'https://example.com/tee_isolated.jpg',
+            alt: 'Isolated tee shirt',
+          },
+        ],
+      },
+      {
+        id: 1003,
+        title: 'Mock Ghost Mannequin Dress',
+        image: { src: 'https://example.com/dress_closeup.jpg' },
+        images: [
+          {
+            id: 1301,
+            position: 1,
+            src: 'https://example.com/dress_closeup.jpg',
+            alt: 'Dress fabric detail',
+          },
+          {
+            id: 1302,
+            position: 2,
+            src: 'https://example.com/dress_mannequin.jpg',
+            alt: 'Ghost mannequin front view',
+          },
+        ],
+      },
+    ];
+  }
+}

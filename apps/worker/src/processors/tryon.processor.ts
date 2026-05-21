@@ -2,9 +2,9 @@ import { Job } from 'bullmq';
 import { Redis } from 'ioredis';
 import pino from 'pino';
 import { TryonJobPayload } from '@trail/queue';
-import { updateTryonRequest } from '@trail/db';
+import { updateTryonRequest, prisma } from '@trail/db';
 import { getSignedReadUrl, upload } from '@trail/storage';
-import { getProvider, generateCompliment } from '@trail/ai';
+import { getProvider, generateCompliment, selectBestGarmentImage } from '@trail/ai';
 import { config } from '@trail/config';
 import * as Sentry from '@sentry/node';
 
@@ -69,13 +69,71 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       logger.info({ requestId, cacheKey }, 'Compliment cache hit');
     }
 
+    // Resolve the best garment image using selection priority logic
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    let selectedGarmentUrl = productImageUrl; // default fallback
+    let selectionStrategy = 'fallback_default';
+    let selectedImageType = 'unknown';
+    let selectionScore = 0;
+    let selectionReason = 'Default product image url used';
+    let fallbackUsed = true;
+
+    if (product) {
+      if (product.preferredGarmentImage) {
+        selectedGarmentUrl = product.preferredGarmentImage;
+        selectionStrategy = 'manual_override';
+        selectedImageType = 'manual';
+        selectionScore = 100;
+        selectionReason = 'Merchant manually preferred garment image';
+        fallbackUsed = false;
+      } else if (product.images) {
+        let imagesArray: any[] = [];
+        try {
+          if (typeof product.images === 'string') {
+            imagesArray = JSON.parse(product.images);
+          } else if (Array.isArray(product.images)) {
+            imagesArray = product.images;
+          }
+        } catch (err: any) {
+          logger.warn({ error: err.message, productId }, 'Failed to parse product.images JSON');
+        }
+
+        if (imagesArray.length > 0) {
+          const selectionResult = selectBestGarmentImage(imagesArray);
+          if (selectionResult) {
+            const bestImage = selectionResult.image;
+            selectedGarmentUrl = bestImage.url || bestImage.src || selectedGarmentUrl;
+            selectionStrategy = selectionResult.reasons.length > 0 ? 'heuristic' : 'fallback_order';
+            selectedImageType = selectionResult.reasons.length > 0 ? 'auto-selected' : 'first-last-fallback';
+            selectionScore = selectionResult.score;
+            selectionReason = selectionResult.reasons.join(', ') || 'No heuristic match; fell back to position order';
+            fallbackUsed = false;
+          }
+        }
+      }
+    }
+
+    logger.info({
+      requestId,
+      productId,
+      selectedGarmentUrl,
+      selectionStrategy,
+      selectedImageType,
+      selectionScore,
+      selectionReason,
+      fallbackUsed
+    }, 'Garment image selection result');
+
     // STEP 4: Call active provider with local retries
     const provider = getProvider();
     const providerStart = Date.now();
     const result = await withRetry(
       () => provider.generate({
         modelImage: userImageUrl,
-        garmentImage: productImageUrl,
+        garmentImage: selectedGarmentUrl,
         tenantId,
         productId,
         requestId,
@@ -153,6 +211,10 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       providerMs,
       geminiMs,
       uploadMs,
+      selectedImageType,
+      selectionScore,
+      selectionReason,
+      fallbackUsed,
       event: 'tryon_completed'
     }, 'Try-on completed successfully');
 

@@ -29,6 +29,14 @@ declare global {
         debug?: boolean;
       }) => void;
     };
+    Shopify?: {
+      shop: string;
+    };
+    meta?: {
+      product?: {
+        id: number | string;
+      };
+    };
   }
 }
 
@@ -81,3 +89,45 @@ window.TryOnWidget = {
     );
   },
 };
+
+// Automatic Bootstrapping for Shopify Storefronts
+if (typeof window !== 'undefined') {
+  const bootstrapShopifyWidget = () => {
+    if (window.Shopify && window.meta && window.meta.product && window.meta.product.id) {
+      const shop = window.Shopify.shop || window.location.hostname;
+      const tenantId = shop.replace('.myshopify.com', '').toLowerCase();
+      const productId = window.meta.product.id.toString();
+
+      // Deduce the API URL from the loaded script's src attribute
+      let apiUrl = '';
+      if (document.currentScript) {
+        try {
+          const src = (document.currentScript as HTMLScriptElement).src;
+          const url = new URL(src);
+          apiUrl = url.origin;
+        } catch (e) {
+          // Fallback if URL parsing fails
+        }
+      }
+
+      // If we couldn't resolve the API URL, default to production onrender url
+      if (!apiUrl) {
+        apiUrl = 'https://virtual-trail-api.onrender.com';
+      }
+
+      console.log(`TryOnWidget: Auto-bootstrap triggered for shop: ${shop}, product: ${productId}`);
+      window.TryOnWidget.init({
+        tenantId,
+        productId,
+        apiUrl,
+        debug: true,
+      });
+    }
+  };
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    bootstrapShopifyWidget();
+  } else {
+    window.addEventListener('DOMContentLoaded', bootstrapShopifyWidget);
+  }
+}

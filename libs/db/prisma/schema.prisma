@@ -34,13 +34,15 @@ model TenantConfig {
 }
 
 model Product {
-  id               String         @id @default(uuid())
-  tenantId         String
-  tenant           Tenant         @relation(fields: [tenantId], references: [id])
-  shopifyProductId String
-  imageUrl         String
-  category         String?
-  createdAt        DateTime       @default(now())
+  id                    String         @id @default(uuid())
+  tenantId              String
+  tenant                Tenant         @relation(fields: [tenantId], references: [id])
+  shopifyProductId      String
+  imageUrl              String
+  category              String?
+  createdAt             DateTime       @default(now())
+  preferredGarmentImage String?
+  images                Json?          // Array of product images with url, position, altText, filename, metadata
 
   tryonRequests    TryonRequest[]
 

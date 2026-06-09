@@ -22,6 +22,8 @@ const ALLOWED_ORIGINS = new Set([
   'https://virtual-trail.pages.dev',
   'https://app.virtual-trail.com',
   'https://admin.virtual-trail.com',
+  'https://momzcradle.in',
+  'https://www.momzcradle.in',
   // Development origins — kept here so they can be reviewed explicitly
   'http://localhost:3000',
   'http://localhost:3001',
@@ -78,6 +80,13 @@ async function bootstrap() {
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-tenant-api-key',
+      'x-request-id',
+    ],
   });
 
   app.useGlobalPipes(

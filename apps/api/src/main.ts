@@ -14,6 +14,7 @@ import { QUEUE_NAMES } from '@trail/queue';
 import { AppModule } from './app.module';
 import { RequestSanitizationPipe } from './common/pipes/sanitize.pipe';
 import { SentryExceptionFilter } from './common/filters/sentry.filter';
+import { json, urlencoded } from 'express';
 
 // ── CORS allowlist ────────────────────────────────────────────────────────────
 // Uses EXACT Set membership — no substring matching to prevent
@@ -52,6 +53,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
 
   app.useLogger(app.get(Logger));
+
+  // ── Body Parser Limits — allow Base64 image uploads ────────────────────────
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ limit: '10mb', extended: true }));
 
   // ── Security headers ────────────────────────────────────────────────────────
   app.use(

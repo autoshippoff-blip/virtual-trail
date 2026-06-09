@@ -156,7 +156,16 @@ export class ShopifyService {
    * Inject or update storefront widget.js ScriptTag on Shopify store.
    */
   async injectScriptTag(shop: string, token: string): Promise<void> {
-    const widgetUrl = appConfig.widget.publicUrl;
+    const tenant = await prisma.tenant.findUnique({
+      where: { shopifyDomain: shop },
+      select: { apiKey: true },
+    });
+
+    if (!tenant) {
+      throw new Error(`Tenant not found for shop: ${shop}`);
+    }
+
+    const widgetUrl = `${appConfig.widget.publicUrl}?tk=${tenant.apiKey}`;
 
     if (this.isMockMode()) {
       this.logger.log(`[MOCK] Injecting ScriptTag: ${widgetUrl} into ${shop}`);
@@ -169,7 +178,17 @@ export class ShopifyService {
     try {
       const existingRes = await axios.get(getUrl, { headers, timeout: 10000 });
       const scriptTags = existingRes.data.script_tags || [];
-      const alreadyInjected = scriptTags.some((tag: any) => tag.src === widgetUrl);
+      
+      let alreadyInjected = false;
+      for (const tag of scriptTags) {
+        if (tag.src === widgetUrl) {
+          alreadyInjected = true;
+        } else if (tag.src.startsWith(appConfig.widget.publicUrl)) {
+          this.logger.log(`Found outdated/mismatched ScriptTag ${tag.id} (${tag.src}), removing it...`);
+          const deleteUrl = `https://${shop}/admin/api/2024-01/script_tags/${tag.id}.json`;
+          await axios.delete(deleteUrl, { headers, timeout: 10000 });
+        }
+      }
 
       if (alreadyInjected) {
         this.logger.log(`ScriptTag already present on ${shop}`);

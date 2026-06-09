@@ -26,7 +26,11 @@ const TryOnApp: React.FC<TryOnAppProps> = ({ tenantId, productId }) => {
       }
 
       try {
-        const response = await fetch(`${runtimeConfig.apiUrl}/v1/tenant/${tenantId}/config`);
+        const response = await fetch(`${runtimeConfig.apiUrl}/v1/tenant/${tenantId}/config`, {
+          headers: {
+            'x-tenant-api-key': runtimeConfig.tenantApiKey,
+          },
+        });
         if (!response.ok) throw new Error('Failed to fetch config');
         const data = await response.json();
         if (runtimeConfig.debug) console.log('TryOnWidget: Config loaded', data);

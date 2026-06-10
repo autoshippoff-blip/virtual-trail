@@ -24,7 +24,7 @@ const TryOnButton: React.FC<TryOnButtonProps> = ({ onClick }) => {
       style={{
         position: 'fixed',
         bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
-        right: '24px',
+        left: '24px',
         zIndex: 9999,
         display: 'flex',
         alignItems: 'center',

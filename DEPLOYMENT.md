@@ -103,7 +103,7 @@ The CDN widget is built using Vite and deployed to Cloudflare Pages (or Vercel /
 1. Link your GitHub repository to [Cloudflare Pages](https://pages.cloudflare.com/).
 2. Select root directory as: `apps/widget`.
 3. Configure Environment Variables for the build stage:
-   `VITE_API_URL="https://virtual-trail-worker.onrender.com"` (Points to your live API instance!)
+   `VITE_API_URL="https://virtual-tryon-api-service.onrender.com"` (Points to your live API instance!)
 4. **Build Settings:**
    *   **Framework Preset:** Vite
    *   **Build Command:** `vite build`

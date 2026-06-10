@@ -111,7 +111,7 @@ if (typeof window !== 'undefined') {
           const src = (document.currentScript as HTMLScriptElement).src;
           const url = new URL(src);
           tenantApiKey = url.searchParams.get('tk') || '';
-          if (!apiUrl && !url.origin.includes('virtual-trail-widget.onrender.com')) {
+          if (!apiUrl && !url.origin.includes('virtual-trail-widget-0v75.onrender.com')) {
             apiUrl = url.origin;
           }
         } catch (e) {
@@ -120,7 +120,7 @@ if (typeof window !== 'undefined') {
       }
 
       if (!apiUrl) {
-        apiUrl = 'https://virtual-trail-api.onrender.com';
+        apiUrl = 'https://virtual-tryon-api-service.onrender.com';
       }
 
       console.log(`TryOnWidget: Auto-bootstrap triggered for shop: ${shop}, product: ${productId}`);

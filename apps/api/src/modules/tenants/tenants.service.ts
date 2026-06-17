@@ -45,19 +45,30 @@ export class TenantsService {
     const totalProcessingTime = validProcessingTimes.reduce((sum, req) => sum + (req.processingTimeMs || 0), 0);
     const avgProcessingTimeMs = validProcessingTimes.length > 0 ? totalProcessingTime / validProcessingTimes.length : 0;
 
-    // Get requests for the last 7 days for a chart
-    const last7Days: Record<string, number> = {};
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      last7Days[dateStr] = 0;
+    // Get requests for the current month for a chart
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    // Get the number of days in the current month
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    const thisMonthDaily: Record<string, number> = {};
+    for (let i = 1; i <= daysInMonth; i++) {
+      // Create date string in YYYY-MM-DD format
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      thisMonthDaily[dateStr] = 0;
     }
 
+    let thisMonthTotal = 0;
+
     successfulRequests.forEach(req => {
-      const dateStr = req.createdAt.toISOString().split('T')[0];
-      if (last7Days[dateStr] !== undefined) {
-        last7Days[dateStr]++;
+      if (req.createdAt.getFullYear() === currentYear && req.createdAt.getMonth() === currentMonth) {
+        thisMonthTotal++;
+        const dateStr = req.createdAt.toISOString().split('T')[0];
+        if (thisMonthDaily[dateStr] !== undefined) {
+          thisMonthDaily[dateStr]++;
+        }
       }
     });
 
@@ -72,7 +83,8 @@ export class TenantsService {
       successRate: parseFloat(successRate.toFixed(2)),
       avgProcessingTimeMs: Math.round(avgProcessingTimeMs),
       activeProducts: productsCount,
-      last7Days: Object.keys(last7Days).map(date => ({ date, count: last7Days[date] })),
+      thisMonthTotal,
+      thisMonthDaily: Object.keys(thisMonthDaily).map(date => ({ date, count: thisMonthDaily[date] })),
     };
   }
 }

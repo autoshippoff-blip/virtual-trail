@@ -70,8 +70,9 @@ export class TenantsController {
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="glass-card rounded-2xl p-6">
-        <p class="text-sm font-medium text-slate-400">Total Try-On Requests</p>
-        <p class="text-3xl font-bold text-white mt-2" id="stat-total">-</p>
+        <p class="text-sm font-medium text-slate-400">This Month's Try-Ons</p>
+        <p class="text-3xl font-bold text-white mt-2" id="stat-this-month">-</p>
+        <p class="text-xs text-slate-500 mt-1" id="stat-total">Total All-Time: -</p>
       </div>
       <div class="glass-card rounded-2xl p-6">
         <p class="text-sm font-medium text-slate-400">Completed Looks</p>
@@ -89,7 +90,7 @@ export class TenantsController {
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 glass-card rounded-2xl p-6">
-        <h3 class="text-base font-semibold text-white mb-6">Usage Over Last 7 Days</h3>
+        <h3 class="text-base font-semibold text-white mb-6">Usage This Month</h3>
         <div class="h-[300px] w-full">
           <canvas id="usageChart"></canvas>
         </div>
@@ -114,17 +115,18 @@ export class TenantsController {
         const data = await res.json();
 
         document.getElementById('header-title').textContent = data.tenantName;
-        document.getElementById('stat-total').textContent = data.totalTryons.toLocaleString();
+        document.getElementById('stat-this-month').textContent = data.thisMonthTotal.toLocaleString();
+        document.getElementById('stat-total').textContent = 'Total All-Time: ' + data.totalTryons.toLocaleString();
         document.getElementById('stat-completed').textContent = data.completedCount.toLocaleString();
         document.getElementById('stat-success-rate').textContent = data.successRate + '%';
         document.getElementById('stat-avg-time').textContent = (data.avgProcessingTimeMs / 1000).toFixed(1) + 's';
 
         // Usage Chart
-        const labels = data.last7Days.map(d => {
+        const labels = data.thisMonthDaily.map(d => {
           const date = new Date(d.date);
-          return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+          return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         });
-        const counts = data.last7Days.map(d => d.count);
+        const counts = data.thisMonthDaily.map(d => d.count);
 
         new Chart(document.getElementById('usageChart'), {
           type: 'bar',

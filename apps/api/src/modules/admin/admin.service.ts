@@ -129,6 +129,7 @@ export class AdminService {
         tenantId: true,
         status: true,
         complimentCached: true,
+        createdAt: true,
         tenant: { select: { name: true, shopifyDomain: true } },
       },
     });
@@ -139,15 +140,21 @@ export class AdminService {
       totalRequests: number;
       completedRequests: number;
       failedRequests: number;
+      thisMonthRequests: number;
       segmindCost: number;
       geminiCost: number;
       redisSavings: number;
       totalCost: number;
+      thisMonthCost: number;
     }> = {};
 
     let globalSegmindCost = 0;
     let globalGeminiCost = 0;
     let globalRedisSavings = 0;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
     for (const req of requests) {
       if (!costByTenant[req.tenantId]) {
@@ -157,10 +164,12 @@ export class AdminService {
           totalRequests: 0,
           completedRequests: 0,
           failedRequests: 0,
+          thisMonthRequests: 0,
           segmindCost: 0,
           geminiCost: 0,
           redisSavings: 0,
           totalCost: 0,
+          thisMonthCost: 0,
         };
       }
 
@@ -169,24 +178,34 @@ export class AdminService {
       if (req.status === 'completed') t.completedRequests++;
       if (req.status === 'failed') t.failedRequests++;
 
+      const isThisMonth = req.createdAt.getMonth() === currentMonth && req.createdAt.getFullYear() === currentYear;
+      if (isThisMonth) {
+        t.thisMonthRequests++;
+      }
+
+      // Convert USD to INR (approx 83.5 INR = 1 USD)
       let segmindCost = 0;
       if (req.status === 'completed') {
-        segmindCost = 0.03;
+        segmindCost = 2.505; // 0.03 USD
       }
 
       let geminiCost = 0;
       let redisSavings = 0;
       if (req.status === 'completed') {
         if (req.complimentCached) {
-          redisSavings = 0.00015;
+          redisSavings = 0.0125; // 0.00015 USD
         } else {
-          geminiCost = 0.00015;
+          geminiCost = 0.0125;
         }
       }
 
       t.segmindCost += segmindCost;
       t.geminiCost += geminiCost;
       t.redisSavings += redisSavings;
+
+      if (isThisMonth) {
+        t.thisMonthCost += (segmindCost + geminiCost);
+      }
 
       globalSegmindCost += segmindCost;
       globalGeminiCost += geminiCost;
@@ -195,19 +214,20 @@ export class AdminService {
 
     const tenantsList = Object.keys(costByTenant).map(tenantId => {
       const t = costByTenant[tenantId];
-      t.segmindCost = parseFloat(t.segmindCost.toFixed(4));
-      t.geminiCost = parseFloat(t.geminiCost.toFixed(4));
-      t.redisSavings = parseFloat(t.redisSavings.toFixed(4));
-      t.totalCost = parseFloat((t.segmindCost + t.geminiCost).toFixed(4));
+      t.segmindCost = parseFloat(t.segmindCost.toFixed(2));
+      t.geminiCost = parseFloat(t.geminiCost.toFixed(2));
+      t.redisSavings = parseFloat(t.redisSavings.toFixed(2));
+      t.totalCost = parseFloat((t.segmindCost + t.geminiCost).toFixed(2));
+      t.thisMonthCost = parseFloat(t.thisMonthCost.toFixed(2));
       return { tenantId, ...t };
     });
 
     return {
       summary: {
-        totalSegmindCost: parseFloat(globalSegmindCost.toFixed(4)),
-        totalGeminiCost: parseFloat(globalGeminiCost.toFixed(4)),
-        totalRedisSavings: parseFloat(globalRedisSavings.toFixed(4)),
-        totalCost: parseFloat((globalSegmindCost + globalGeminiCost).toFixed(4)),
+        totalSegmindCost: parseFloat(globalSegmindCost.toFixed(2)),
+        totalGeminiCost: parseFloat(globalGeminiCost.toFixed(2)),
+        totalRedisSavings: parseFloat(globalRedisSavings.toFixed(2)),
+        totalCost: parseFloat((globalSegmindCost + globalGeminiCost).toFixed(2)),
       },
       tenants: tenantsList,
     };

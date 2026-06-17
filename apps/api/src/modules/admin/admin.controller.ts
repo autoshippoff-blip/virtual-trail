@@ -132,8 +132,8 @@ export class AdminController {
             <i class="fa-solid fa-wallet text-emerald-400 text-lg"></i>
           </div>
           <div>
-            <h2 id="stat-cost" class="font-outfit font-bold text-4xl mt-2 tracking-tight text-emerald-400">$0.00</h2>
-            <p class="text-xs text-slate-500 mt-1">Fittroom GPU + Gemini LLM fees</p>
+            <h2 id="stat-cost" class="font-outfit font-bold text-4xl mt-2 tracking-tight text-emerald-400">₹0.00</h2>
+            <p class="text-xs text-slate-500 mt-1">Fittroom GPU + Gemini LLM fees (INR)</p>
           </div>
         </div>
 
@@ -144,7 +144,7 @@ export class AdminController {
             <i class="fa-solid fa-bolt text-yellow-400 text-lg"></i>
           </div>
           <div>
-            <h2 id="stat-savings" class="font-outfit font-bold text-4xl mt-2 tracking-tight text-yellow-400">$0.00</h2>
+            <h2 id="stat-savings" class="font-outfit font-bold text-4xl mt-2 tracking-tight text-yellow-400">₹0.00</h2>
             <p class="text-xs text-purple-300 mt-1 font-medium">saved via Upstash Redis Caching!</p>
           </div>
         </div>
@@ -191,10 +191,11 @@ export class AdminController {
                 <th class="pb-3 pl-2">Merchant Name</th>
                 <th class="pb-3">Shopify Domain</th>
                 <th class="pb-3 text-center">Requests</th>
-                <th class="pb-3 text-center">Completed</th>
+                <th class="pb-3 text-center text-emerald-400">This Month Req</th>
                 <th class="pb-3 text-center font-semibold">Fittroom GPU</th>
                 <th class="pb-3 text-center font-semibold">Gemini LLM</th>
                 <th class="pb-3 text-center text-yellow-400">Redis Savings</th>
+                <th class="pb-3 text-center font-bold text-white">This Month Cost</th>
                 <th class="pb-3 pr-2 text-right">Total Cost</th>
               </tr>
             </thead>
@@ -229,8 +230,8 @@ export class AdminController {
         document.getElementById('stat-tenants').innerText = analyticsRes.totals.tenants;
         document.getElementById('stat-requests').innerText = analyticsRes.totals.requests.toLocaleString();
         document.getElementById('stat-success-rate').innerText = 'success rate: ' + analyticsRes.successRate + '%';
-        document.getElementById('stat-cost').innerText = '$' + costsRes.summary.totalCost.toFixed(2);
-        document.getElementById('stat-savings').innerText = '$' + costsRes.summary.totalRedisSavings.toFixed(2);
+        document.getElementById('stat-cost').innerText = '₹' + costsRes.summary.totalCost.toFixed(2);
+        document.getElementById('stat-savings').innerText = '₹' + costsRes.summary.totalRedisSavings.toFixed(2);
         document.getElementById('stat-latency').innerHTML = 'Avg Latency: <span class="text-cyan-400 font-semibold">' + analyticsRes.avgProcessingTimeMs + ' ms</span>';
 
         // 2. Load Cost Allocation Chart
@@ -299,11 +300,12 @@ export class AdminController {
             <td class="py-4 pl-2 font-semibold text-white font-outfit">\${t.tenantName}</td>
             <td class="py-4 text-slate-400 font-mono">\${t.shopifyDomain || 'N/A'}</td>
             <td class="py-4 text-center font-medium">\${t.totalRequests}</td>
-            <td class="py-4 text-center text-emerald-400 font-medium">\${t.completedRequests}</td>
-            <td class="py-4 text-center font-medium text-purple-400">\$\${t.segmindCost.toFixed(3)}</td>
-            <td class="py-4 text-center font-medium text-cyan-400">\$\${t.geminiCost.toFixed(4)}</td>
-            <td class="py-4 text-center font-medium text-yellow-400">\$\${t.redisSavings.toFixed(4)}</td>
-            <td class="py-4 pr-2 text-right font-bold text-white">\$\${t.totalCost.toFixed(3)}</td>
+            <td class="py-4 text-center text-emerald-400 font-bold">\${t.thisMonthRequests}</td>
+            <td class="py-4 text-center font-medium text-purple-400">₹\${t.segmindCost.toFixed(2)}</td>
+            <td class="py-4 text-center font-medium text-cyan-400">₹\${t.geminiCost.toFixed(2)}</td>
+            <td class="py-4 text-center font-medium text-yellow-400">₹\${t.redisSavings.toFixed(2)}</td>
+            <td class="py-4 text-center font-bold text-white">₹\${t.thisMonthCost.toFixed(2)}</td>
+            <td class="py-4 pr-2 text-right font-bold text-slate-400">₹\${t.totalCost.toFixed(2)}</td>
           \`;
           rowsContainer.appendChild(row);
         });

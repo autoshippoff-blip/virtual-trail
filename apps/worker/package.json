@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "start": "tsx src/main.ts"
+    "start": "node --import tsx --max-old-space-size=192 src/main.ts"
   },
   "dependencies": {
     "bullmq": "^5.4.1",

@@ -152,6 +152,10 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
     // STEP 4.5: Apply watermark if configured
     let finalBuffer = imageBuffer;
     if (tenantConfig && tenantConfig.watermark) {
+      tenantConfig.watermark.type = 'pattern-logo';
+      if (!tenantConfig.watermark.keyOrUrl) {
+        tenantConfig.watermark.keyOrUrl = 'MomzCradle_Water_mark.png';
+      }
       const wmResult = await applyWatermarkWithMetrics(imageBuffer, tenantConfig.watermark);
       finalBuffer = wmResult.buffer;
       logger.info({

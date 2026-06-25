@@ -125,8 +125,8 @@ export class TryonService {
         segmindModel: resolvedTenant.segmindModel,
         complimentTone: resolvedTenant.complimentTone as any,
         watermark: {
-          type: resolvedTenant.watermarkType || 'corner-logo',
-          keyOrUrl: resolvedTenant.watermarkKey || resolvedTenant.logoUrl || null,
+          type: 'pattern-logo',
+          keyOrUrl: resolvedTenant.watermarkKey || resolvedTenant.logoUrl || 'MomzCradle_Water_mark.png',
           text: resolvedTenant.watermarkText || resolvedTenant.name,
           scale: resolvedTenant.watermarkScale ?? 0.21,
           position: resolvedTenant.watermarkPosition ?? 'bottom-right',

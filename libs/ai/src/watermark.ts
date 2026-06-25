@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import axios from 'axios';
 import fs from 'fs';
+import path from 'path';
 import { getSignedReadUrl } from '@trail/storage';
 
 export interface WatermarkConfig {
@@ -217,8 +218,78 @@ class PatternTextStrategy implements WatermarkStrategy {
 }
 
 class PatternLogoStrategy implements WatermarkStrategy {
-  async execute(mainBuffer: Buffer) {
-    return { buffer: mainBuffer, metrics: { watermarkApplied: false, fallbackUsed: true } };
+  async execute(mainBuffer: Buffer, mainImg: sharp.Sharp, mainMeta: sharp.Metadata, config: WatermarkConfig) {
+    let keyOrUrl = config.keyOrUrl;
+    if (!keyOrUrl || (!fs.existsSync(keyOrUrl) && !keyOrUrl.startsWith('http') && !keyOrUrl.startsWith('data:'))) {
+      const rootFallback = path.resolve(process.cwd(), 'MomzCradle_Water_mark.png');
+      if (fs.existsSync(rootFallback)) {
+        keyOrUrl = rootFallback;
+      } else {
+        throw new Error('No valid pattern logo PNG keyOrUrl found');
+      }
+    }
+
+    const mainWidth = mainMeta.width || 1024;
+    const mainHeight = mainMeta.height || 1024;
+
+    const rawOpacity = config.opacity ?? 0.15;
+    const opacity = Math.min(0.40, Math.max(0.02, rawOpacity));
+
+    const rawSpacing = config.spacing ?? 345;
+    const spacing = Math.min(650, Math.max(150, rawSpacing));
+
+    const rawRotation = config.rotation ?? -30;
+    const rotation = Math.min(90, Math.max(-90, rawRotation));
+
+    const activeKey = keyOrUrl;
+    const cacheKey = `logo_${config.tenantId || 'anon'}_${activeKey}_${rotation}_${spacing}_${opacity}_${mainWidth}x${mainHeight}`;
+    let overlayBuffer = svgPatternCache.get(cacheKey);
+    let svgCacheHit = false;
+
+    if (overlayBuffer) {
+      svgCacheHit = true;
+    } else {
+      const logoRaw = await fetchWatermarkBuffer(activeKey);
+      const targetLogoW = Math.round(spacing * 0.58);
+      const resizedLogo = await sharp(logoRaw)
+        .resize({ width: targetLogoW, withoutEnlargement: true })
+        .png()
+        .toBuffer();
+      const logoBase64 = resizedLogo.toString('base64');
+      const offset = Math.round((spacing - targetLogoW) / 2);
+
+      const svgString = `<svg width="${mainWidth}" height="${mainHeight}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <pattern id="wm" width="${spacing}" height="${spacing}" patternUnits="userSpaceOnUse" patternTransform="rotate(${rotation})">
+      <image x="${offset}" y="${offset}" width="${targetLogoW}" href="data:image/png;base64,${logoBase64}" opacity="${opacity}" preserveAspectRatio="xMidYMid meet" />
+    </pattern>
+    <radialGradient id="face-fade" cx="50%" cy="30%" r="32%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.25)" />
+      <stop offset="100%" stop-color="white" />
+    </radialGradient>
+    <mask id="face-mask">
+      <rect width="100%" height="100%" fill="url(#face-fade)" />
+    </mask>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#wm)" mask="url(#face-mask)" />
+</svg>`;
+      overlayBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
+      svgPatternCache.set(cacheKey, overlayBuffer);
+    }
+
+    const compositedBuffer = await mainImg
+      .composite([{ input: overlayBuffer, blend: 'over' }])
+      .jpeg({ quality: 92 })
+      .toBuffer();
+
+    return {
+      buffer: compositedBuffer,
+      metrics: {
+        svgCacheHit,
+        watermarkApplied: true,
+        fallbackUsed: false,
+      }
+    };
   }
 }
 
@@ -236,12 +307,12 @@ export async function applyWatermarkWithMetrics(
   config?: WatermarkConfig | null
 ): Promise<{ buffer: Buffer; metrics: WatermarkMetrics }> {
   const start = Date.now();
-  const defaultType = 'corner-logo';
+  const defaultType = 'pattern-logo';
   let type = config?.type || defaultType;
 
-  // Smart Auto-Fallback: If corner-logo requested but no image asset key/url exists, switch to pattern-text
+  // Smart Auto-Fallback: If corner-logo requested but no image asset key/url exists, switch to pattern-logo
   if (type === 'corner-logo' && !config?.keyOrUrl) {
-    type = 'pattern-text';
+    type = 'pattern-logo';
   }
 
   const baseMetrics: WatermarkMetrics = {

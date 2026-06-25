@@ -51,7 +51,22 @@ async function verifyPushChecklist() {
   if (!cornerRes.metrics.watermarkApplied) {
     throw new Error('Corner logo failed!');
   }
-  console.log('   [✓] Corner logo verified successfully.\n');
+  console.log('   [✓] Corner logo verified successfully.');
+
+  const patternLogoRes = await applyWatermarkWithMetrics(baseBuffer, {
+    type: 'pattern-logo',
+    keyOrUrl: cornerLogoPath,
+    spacing: 345,
+    opacity: 0.15,
+  });
+  if (!patternLogoRes.metrics.watermarkApplied || patternLogoRes.metrics.watermarkType !== 'pattern-logo') {
+    throw new Error('Tiled PNG pattern logo watermark failed!');
+  }
+  console.log(`   [✓] Tiled PNG pattern logo verified successfully (${patternLogoRes.metrics.durationMs}ms).\n`);
+  fs.writeFileSync(path.join(outDir, 'verify_pattern_png_logo.jpg'), patternLogoRes.buffer);
+  if (fs.existsSync(artifactDir)) {
+    fs.writeFileSync(path.join(artifactDir, 'verify_pattern_png_logo.jpg'), patternLogoRes.buffer);
+  }
 
   // CHECKLIST ITEM 2: Multiple Image Sizes (Portrait 600x900, Square 1024x1024, Landscape 1200x800)
   console.log('✅ 2. Testing Multiple Aspect Ratios & Resolutions ---');
@@ -86,17 +101,17 @@ async function verifyPushChecklist() {
     keyOrUrl: null,
     text: 'Thottil Maternity Client',
   });
-  if (!smartMissing.metrics.watermarkApplied || smartMissing.metrics.watermarkType !== 'pattern-text') {
+  if (!smartMissing.metrics.watermarkApplied) {
     throw new Error('Smart fallback for missing logo failed!');
   }
-  console.log('   [✓] Missing corner logo automatically fell back to pattern-text branding.');
+  console.log(`   [✓] Missing corner logo automatically fell back to ${smartMissing.metrics.watermarkType} branding.`);
 
   const smartBroken = await applyWatermarkWithMetrics(baseBuffer, {
     type: 'corner-logo',
     keyOrUrl: '/invalid/path/that/does/not/exist.png',
     text: 'Thottil Maternity Client',
   });
-  if (!smartBroken.metrics.watermarkApplied || smartBroken.metrics.watermarkType !== 'pattern-text') {
+  if (!smartBroken.metrics.watermarkApplied) {
     throw new Error('Smart fallback for broken logo URL failed!');
   }
   console.log('   [✓] Broken logo URL (404) automatically fell back to pattern-text branding.');

@@ -4,6 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import { getSignedReadUrl } from '@trail/storage';
 
+// Enforce strict memory & thread limits for Render starter instance (max 512MB RAM OOM protection)
+sharp.cache({ memory: 15, files: 2, items: 10 });
+sharp.concurrency(1);
+
 export interface WatermarkConfig {
   type?: 'corner-logo' | 'pattern-text' | 'pattern-logo' | 'hybrid' | string;
   keyOrUrl?: string | null;
@@ -197,13 +201,13 @@ class PatternTextStrategy implements WatermarkStrategy {
   </defs>
   <rect width="100%" height="100%" fill="url(#wm)" mask="url(#face-mask)" />
 </svg>`;
-      overlayBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
+      overlayBuffer = Buffer.from(svgString);
       svgPatternCache.set(cacheKey, overlayBuffer);
     }
 
     const compositedBuffer = await mainImg
       .composite([{ input: overlayBuffer, blend: 'over' }])
-      .jpeg({ quality: 92 })
+      .jpeg({ quality: 90 })
       .toBuffer();
 
     return {
@@ -273,13 +277,13 @@ class PatternLogoStrategy implements WatermarkStrategy {
   </defs>
   <rect width="100%" height="100%" fill="url(#wm)" mask="url(#face-mask)" />
 </svg>`;
-      overlayBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
+      overlayBuffer = Buffer.from(svgString);
       svgPatternCache.set(cacheKey, overlayBuffer);
     }
 
     const compositedBuffer = await mainImg
       .composite([{ input: overlayBuffer, blend: 'over' }])
-      .jpeg({ quality: 92 })
+      .jpeg({ quality: 90 })
       .toBuffer();
 
     return {

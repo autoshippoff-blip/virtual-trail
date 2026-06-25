@@ -79,19 +79,32 @@ async function verifyPushChecklist() {
   }
   console.log('');
 
-  // CHECKLIST ITEM 4: Test Failure Handling & Fault Tolerance
-  console.log('✅ 4. Testing Fault Tolerance (Simulating Broken Watermark Config) ---');
-  const brokenRes = await applyWatermarkWithMetrics(baseBuffer, {
+  // CHECKLIST ITEM 4: Test Smart Auto-Fallback & Fault Tolerance
+  console.log('✅ 4. Testing Smart Auto-Fallback (Simulating Missing/Broken Corner Logo) ---');
+  const smartMissing = await applyWatermarkWithMetrics(baseBuffer, {
+    type: 'corner-logo',
+    keyOrUrl: null,
+    text: 'Thottil Maternity Client',
+  });
+  if (!smartMissing.metrics.watermarkApplied || smartMissing.metrics.watermarkType !== 'pattern-text') {
+    throw new Error('Smart fallback for missing logo failed!');
+  }
+  console.log('   [✓] Missing corner logo automatically fell back to pattern-text branding.');
+
+  const smartBroken = await applyWatermarkWithMetrics(baseBuffer, {
     type: 'corner-logo',
     keyOrUrl: '/invalid/path/that/does/not/exist.png',
+    text: 'Thottil Maternity Client',
   });
-  if (brokenRes.metrics.watermarkApplied || brokenRes.metrics.fallbackUsed !== true) {
-    throw new Error('Failure handling did not fall back properly!');
+  if (!smartBroken.metrics.watermarkApplied || smartBroken.metrics.watermarkType !== 'pattern-text') {
+    throw new Error('Smart fallback for broken logo URL failed!');
   }
-  if (!brokenRes.buffer.equals(baseBuffer)) {
-    throw new Error('Corrupted image buffer returned during failure fallback!');
+  console.log('   [✓] Broken logo URL (404) automatically fell back to pattern-text branding.');
+  fs.writeFileSync(path.join(outDir, 'verify_client_fix.jpg'), smartBroken.buffer);
+  if (fs.existsSync(artifactDir)) {
+    fs.writeFileSync(path.join(artifactDir, 'verify_client_fix.jpg'), smartBroken.buffer);
   }
-  console.log('   [✓] Exception swallowed gracefully. Original uncorrupted image buffer returned (fallbackUsed: true).\n');
+  console.log('✅ Fixed client website proof saved: verify_client_fix.jpg\n');
 
   console.log('=====================================================');
   console.log('       ALL CHECKLIST TESTS PASSED 100%!              ');

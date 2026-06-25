@@ -237,7 +237,12 @@ export async function applyWatermarkWithMetrics(
 ): Promise<{ buffer: Buffer; metrics: WatermarkMetrics }> {
   const start = Date.now();
   const defaultType = 'corner-logo';
-  const type = config?.type || defaultType;
+  let type = config?.type || defaultType;
+
+  // Smart Auto-Fallback: If corner-logo requested but no image asset key/url exists, switch to pattern-text
+  if (type === 'corner-logo' && !config?.keyOrUrl) {
+    type = 'pattern-text';
+  }
 
   const baseMetrics: WatermarkMetrics = {
     watermarkType: type,
@@ -284,7 +289,27 @@ export async function applyWatermarkWithMetrics(
       }
     };
   } catch (err: any) {
-    console.warn(`[Watermark Error]: Failed to apply watermark strategy (${type}). Proceeding unwatermarked. Error: ${err.message}`);
+    console.warn(`[Watermark Error]: Failed to apply watermark strategy (${type}). Attempting auto-fallback to pattern-text. Error: ${err.message}`);
+    if (type !== 'pattern-text') {
+      try {
+        const fallbackStrategy = new PatternTextStrategy();
+        const mainImg = sharp(mainImageBuffer);
+        const mainMeta = await mainImg.metadata();
+        const fallbackRes = await fallbackStrategy.execute(mainImageBuffer, mainImg, mainMeta, config);
+        return {
+          buffer: fallbackRes.buffer,
+          metrics: {
+            ...baseMetrics,
+            watermarkType: 'pattern-text',
+            ...fallbackRes.metrics,
+            durationMs: Date.now() - start,
+            fallbackUsed: true,
+          }
+        };
+      } catch (fallbackErr) {
+        // Fallback also failed
+      }
+    }
     return {
       buffer: mainImageBuffer,
       metrics: {

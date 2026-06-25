@@ -225,11 +225,28 @@ class PatternLogoStrategy implements WatermarkStrategy {
   async execute(mainBuffer: Buffer, mainImg: sharp.Sharp, mainMeta: sharp.Metadata, config: WatermarkConfig) {
     let keyOrUrl = config.keyOrUrl;
     if (!keyOrUrl || (!fs.existsSync(keyOrUrl) && !keyOrUrl.startsWith('http') && !keyOrUrl.startsWith('data:'))) {
-      const rootFallback = path.resolve(process.cwd(), 'MomzCradle_Water_mark.png');
-      if (fs.existsSync(rootFallback)) {
-        keyOrUrl = rootFallback;
+      const candidates = [
+        keyOrUrl,
+        '/opt/render/project/src/MomzCradle_Water_mark.png',
+        path.resolve(process.cwd(), 'MomzCradle_Water_mark.png'),
+        path.resolve(process.cwd(), '../../MomzCradle_Water_mark.png'),
+        path.resolve(process.cwd(), '../../../MomzCradle_Water_mark.png'),
+        path.resolve(__dirname, '../../../MomzCradle_Water_mark.png'),
+        path.resolve(__dirname, '../../../../MomzCradle_Water_mark.png'),
+        path.resolve(__dirname, '../../../../../MomzCradle_Water_mark.png'),
+        'MomzCradle_Water_mark.png'
+      ];
+      let found: string | null = null;
+      for (const c of candidates) {
+        if (c && (c.startsWith('http') || c.startsWith('data:') || fs.existsSync(c))) {
+          found = c;
+          break;
+        }
+      }
+      if (found) {
+        keyOrUrl = found;
       } else {
-        throw new Error('No valid pattern logo PNG keyOrUrl found');
+        throw new Error('No valid pattern logo PNG found in monorepo paths');
       }
     }
 

@@ -25,6 +25,10 @@ const ALLOWED_ORIGINS = new Set([
   'https://admin.virtual-trail.com',
   'https://momzcradle.in',
   'https://www.momzcradle.in',
+  'https://autoshipp.com',
+  'https://www.autoshipp.com',
+  'https://autoshipp.in',
+  'https://www.autoshipp.in',
   // Development origins — kept here so they can be reviewed explicitly
   'http://localhost:3000',
   'http://localhost:3001',

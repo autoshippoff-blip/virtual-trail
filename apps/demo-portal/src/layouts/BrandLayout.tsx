@@ -158,7 +158,7 @@ export const BrandLayout: React.FC<BrandLayoutProps> = ({ brand, children }) => 
             Powered by <strong>Virtual-Trail AI Virtual Fitting Room</strong>
           </p>
           <p style={{ margin: 0 }}>
-            &copy; {new Date().getFullYear()} MomzCradle. All rights reserved. Confidential Client Demo Environment.
+            &copy; {new Date().getFullYear()} Autoshipp. All rights reserved. Confidential Client Demo Environment.
           </p>
         </div>
       </footer>

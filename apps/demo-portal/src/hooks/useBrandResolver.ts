@@ -13,11 +13,20 @@ export function useBrandResolver() {
     // 1. Resolve Brand ID (Subdomain first, then path parameter)
     const hostname = window.location.hostname;
     const parts = hostname.split('.');
+    const isGenericDeployDomain = hostname.endsWith('.vercel.app') || hostname.endsWith('.pages.dev');
     
-    // Subdomain routing checks: e.g., effilo.demo.virtualtrail.local
-    // Ignore generic subdomains like 'www', 'demo', or localhost hostname
     let resolvedBrandId = pathBrandId;
-    if (parts.length > 2 && parts[0] !== 'www' && parts[0] !== 'demo' && !hostname.includes('localhost')) {
+    let isSubdomain = false;
+
+    if (isGenericDeployDomain) {
+      // For vercel.app or pages.dev, a brand subdomain would be brand.project.vercel.app (parts.length >= 4)
+      isSubdomain = parts.length >= 4 && parts[0] !== 'www' && parts[0] !== 'demo';
+    } else {
+      // For custom domains or local resolution
+      isSubdomain = parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'demo' && !hostname.includes('localhost');
+    }
+
+    if (isSubdomain) {
       resolvedBrandId = parts[0];
     }
 

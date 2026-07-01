@@ -34,8 +34,29 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 /**
+ * Returns true for any Demo Portal host or custom subdomains.
+ */
+function isDemoPortalOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    const hostname = url.hostname;
+    return (
+      url.protocol === 'https:' &&
+      (hostname === 'virtual-tryon-demo-portal.vercel.app' ||
+        hostname.endsWith('.virtual-tryon-demo-portal.vercel.app') ||
+        hostname === 'demo.virtualtrail.ai' ||
+        hostname.endsWith('.demo.virtualtrail.ai') ||
+        hostname === 'virtual-trail.pages.dev' ||
+        hostname.endsWith('.virtual-trail.pages.dev'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Returns true for any *.myshopify.com merchant storefront.
- * Uses strict suffix matching — not substring — to prevent spoofing.
+ * Uses strict suffix matching — not suffix substring — to prevent spoofing.
  */
 function isShopifyOrigin(origin: string): boolean {
   try {
@@ -78,7 +99,7 @@ async function bootstrap() {
         return;
       }
 
-      if (ALLOWED_ORIGINS.has(origin) || isShopifyOrigin(origin)) {
+      if (ALLOWED_ORIGINS.has(origin) || isShopifyOrigin(origin) || isDemoPortalOrigin(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`Origin "${origin}" is not permitted by CORS policy`));

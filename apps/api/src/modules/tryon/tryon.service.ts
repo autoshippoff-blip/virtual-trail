@@ -18,11 +18,14 @@ import { ImageValidationError } from './tryon.errors';
 
 @Injectable()
 export class TryonService {
-  private readonly logger = new Logger(TryonService.name);
+  private readonly logger: Logger;
   private queue: Queue;
   private redis: Redis;
 
   constructor() {
+    // Assign all fields inside constructor so ESNext class fields
+    // (useDefineForClassFields) cannot overwrite them after construction
+    this.logger = new Logger(TryonService.name);
     const connection = new Redis(appConfig.redis.url, { maxRetriesPerRequest: null });
     this.queue = new Queue(QUEUE_NAMES.TRYON, { connection });
     this.redis = connection;

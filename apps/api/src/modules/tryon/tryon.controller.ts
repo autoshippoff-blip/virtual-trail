@@ -6,7 +6,12 @@ import { CreateTryonDto, TryonResponse, TryonStatusResponse } from './tryon.dto'
 
 @Controller('v1/tryon')
 export class TryonController {
-  constructor(@Inject(TryonService) private readonly tryonService: TryonService) {}
+  constructor(@Inject(TryonService) private tryonService: TryonService) {
+    // Defensive: instantiate directly if DI fails (reflect-metadata timing)
+    if (!this.tryonService) {
+      this.tryonService = new TryonService();
+    }
+  }
 
   @Post()
   @UseGuards(TenantGuard)

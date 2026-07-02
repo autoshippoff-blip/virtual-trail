@@ -8,10 +8,11 @@ import { encryptToken, decryptToken } from '@trail/security';
 
 @Injectable()
 export class ShopifyService {
-  private readonly logger = new Logger(ShopifyService.name);
+  private readonly logger: Logger;
   private readonly redis: Redis;
 
   constructor() {
+    this.logger = new Logger(ShopifyService.name);
     this.redis = new Redis(appConfig.redis.url, { maxRetriesPerRequest: null });
   }
 

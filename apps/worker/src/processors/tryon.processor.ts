@@ -26,6 +26,23 @@ async function withRetry<T>(
       return await fn();
     } catch (err: any) {
       lastErr = err;
+
+      // Abort immediately on non-retryable errors to save credits/API costs
+      const isInvalidResponse = 
+        err?.name === 'InvalidProviderResponseError' || 
+        err?.message?.includes('Unknown processing error') || 
+        err?.message?.includes('task processing failed') || 
+        err?.response?.status === 400 || 
+        err?.response?.status === 402;
+
+      if (isInvalidResponse) {
+        logger.error(
+          { name: options.name, error: err.message },
+          `Non-retryable error in ${options.name}, aborting immediately`
+        );
+        throw err;
+      }
+
       logger.warn(
         { attempt, name: options.name, error: err.message },
         `Transient error in ${options.name}, retrying...`
@@ -265,6 +282,24 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       });
     }
 
-    throw error; // Re-throw for BullMQ retry strategy
+    // Abort BullMQ retries for non-retryable errors to save credits/API costs
+    const isInvalidResponse = 
+      error?.name === 'InvalidProviderResponseError' || 
+      error?.message?.includes('Unknown processing error') || 
+      error?.message?.includes('task processing failed') || 
+      error?.response?.status === 400 || 
+      error?.response?.status === 402;
+
+    if (isInvalidResponse) {
+      logger.warn({ requestId, tenantId }, 'Aborting BullMQ retries for non-retryable error');
+      // Update DB status to failed permanently (do not prepend attempt message since we are aborting)
+      await updateTryonRequest(requestId, {
+        status: 'failed',
+        errorMessage: error.message,
+      });
+      return; // Return normally to complete the job in BullMQ and prevent retries
+    }
+
+    throw error; // Re-throw for BullMQ retry strategy (for transient network/R2 timeouts)
   }
 }

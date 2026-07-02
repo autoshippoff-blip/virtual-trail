@@ -81,20 +81,7 @@ async function bootstrap() {
     const isPermanent = job && attemptsMade >= (job.opts.attempts || 1);
 
     if (isPermanent) {
-      logger.error({ jobId: job.id, attemptsMade: job.attemptsMade }, 'Job PERMANENTLY failed. Moving to DLQ.');
-      try {
-        const dlqQueue = new Queue('tryon-dlq', { connection });
-        await dlqQueue.add('failed-job', {
-          originalJobId: job.id,
-          data: job.data,
-          failedAt: new Date().toISOString(),
-          reason: err.message,
-          stack: err.stack,
-        });
-        logger.info({ jobId: job.id }, 'Successfully routed job to tryon-dlq');
-      } catch (dlqErr: any) {
-        logger.error({ dlqErr: dlqErr.message }, 'Failed to route job to DLQ');
-      }
+      logger.error({ jobId: job.id, attemptsMade: job.attemptsMade }, 'Job PERMANENTLY failed.');
     }
 
     if (config.sentry.dsnWorker) {

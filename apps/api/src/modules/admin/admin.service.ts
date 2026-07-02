@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Queue } from 'bullmq';
+import { Redis } from 'ioredis';
+import { config as appConfig } from '@trail/config';
+import { QUEUE_NAMES } from '@trail/queue';
 import { prisma, createAuditLog } from '@trail/db';
 
 
@@ -354,5 +358,25 @@ export class AdminService {
       complimentCacheHitRate: parseFloat(cacheHitRatio.toFixed(2)),
       activeProducts: productsCount,
     };
+  }
+
+  async clearQueues() {
+    const connection = new Redis(appConfig.redis.url, { maxRetriesPerRequest: null });
+    try {
+      const tryonQueue = new Queue(QUEUE_NAMES.TRYON, { connection });
+      const dlqQueue = new Queue('tryon-dlq', { connection });
+
+      // Clean all jobs from tryon-queue
+      await tryonQueue.drain();
+      await tryonQueue.clean(0, 1000, 'failed');
+      await tryonQueue.clean(0, 1000, 'completed');
+
+      // Obliterate the dead-letter queue completely
+      await dlqQueue.obliterate({ force: true });
+
+      return { success: true };
+    } finally {
+      await connection.quit();
+    }
   }
 }

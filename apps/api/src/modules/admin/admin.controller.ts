@@ -98,6 +98,9 @@ export class AdminController {
         <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
         API Operational
       </div>
+      <button onclick="handleClearQueues()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold font-outfit shadow-lg shadow-red-600/30 transition-all flex items-center gap-2">
+        <i class="fa-solid fa-trash-can"></i> Clear/Reset Queues
+      </button>
       <a href="/admin/queues" target="_blank" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold font-outfit shadow-lg shadow-purple-600/30 transition-all flex items-center gap-2">
         <i class="fa-solid fa-server"></i> Bull Board Queues
       </a>
@@ -326,6 +329,33 @@ export class AdminController {
     }
 
     loadDashboard();
+
+    async function handleClearQueues() {
+      if (!confirm('Are you sure you want to completely clear and reset all tryon queues? This will delete all pending, retrying, and DLQ jobs.')) {
+        return;
+      }
+      try {
+        const btn = document.querySelector('button[onclick="handleClearQueues()"]');
+        const origContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Clearing...';
+        
+        const res = await fetch('/admin/queues/clear', {
+          method: 'POST',
+        });
+        
+        if (res.ok) {
+          alert('All queues cleared successfully!');
+          window.location.reload();
+        } else {
+          alert('Failed to clear queues: ' + res.statusText);
+          btn.disabled = false;
+          btn.innerHTML = origContent;
+        }
+      } catch (err) {
+        alert('Failed to clear queues: ' + err.message);
+      }
+    }
   </script>
 </body>
 </html>`;
@@ -427,6 +457,12 @@ export class AdminController {
   @UseGuards(AdminGuard)
   async getImageSelectionGuidance() {
     return this.adminService.getImageSelectionGuidance();
+  }
+
+  @Post('queues/clear')
+  @UseGuards(AdminGuard)
+  async clearQueues() {
+    return this.adminService.clearQueues();
   }
 }
 

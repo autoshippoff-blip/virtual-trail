@@ -2,6 +2,7 @@ import axios from 'axios';
 import { z } from 'zod';
 import * as Sentry from '@sentry/node';
 import pino from 'pino';
+import sharp from 'sharp';
 import { config } from '@trail/config';
 import { validateExternalImageUrl, SsrfBlockedError } from '@trail/security';
 import {
@@ -91,11 +92,23 @@ export class FitRoomProvider implements VirtualTryOnProvider {
       // 2. Download model and garment images from their source URLs and convert to Blobs
       logger.debug({ provider: providerName, requestId: input.requestId }, 'Downloading model image from storage URL');
       const modelRes = await axios.get(input.modelImage, { responseType: 'arraybuffer', timeout: 15000 });
-      const modelBlob = new Blob([modelRes.data], { type: 'image/jpeg' });
+      let modelBuffer = Buffer.from(modelRes.data);
+      try {
+        modelBuffer = await sharp(modelBuffer).jpeg().toBuffer();
+      } catch (err: any) {
+        logger.warn({ provider: providerName, error: err.message }, 'Failed converting model image to JPEG, using raw bytes');
+      }
+      const modelBlob = new Blob([modelBuffer], { type: 'image/jpeg' });
 
       logger.debug({ provider: providerName, requestId: input.requestId }, 'Downloading garment image from storage URL');
       const garmentRes = await axios.get(input.garmentImage, { responseType: 'arraybuffer', timeout: 15000 });
-      const garmentBlob = new Blob([garmentRes.data], { type: 'image/jpeg' });
+      let garmentBuffer = Buffer.from(garmentRes.data);
+      try {
+        garmentBuffer = await sharp(garmentBuffer).jpeg().toBuffer();
+      } catch (err: any) {
+        logger.warn({ provider: providerName, error: err.message }, 'Failed converting garment image to JPEG, using raw bytes');
+      }
+      const garmentBlob = new Blob([garmentBuffer], { type: 'image/jpeg' });
 
       // 2. Build standard FormData payload
       const formData = new FormData();

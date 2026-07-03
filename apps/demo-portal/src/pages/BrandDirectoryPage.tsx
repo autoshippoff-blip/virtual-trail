@@ -176,7 +176,7 @@ export const BrandDirectoryPage: React.FC = () => {
                 margin: '0 0 8px 0',
                 color: '#FFFFFF'
               }}>{b.name}</h2>
-              
+
               <p style={{
                 fontSize: '13px',
                 color: '#9CA3AF',

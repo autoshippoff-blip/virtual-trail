@@ -7,7 +7,7 @@ interface BrandLayoutProps {
 
 export const BrandLayout: React.FC<BrandLayoutProps> = ({ brand, children }) => {
   const primaryColor = brand.theme.primaryColor;
-  
+
   // Dynamic assets from configuration
   const logoUrl = brand.logoUrl;
   const bannerUrl = brand.bannerUrl;
@@ -81,7 +81,7 @@ export const BrandLayout: React.FC<BrandLayoutProps> = ({ brand, children }) => 
           backgroundPosition: 'center',
           zIndex: 1,
         }} />
-        
+
         {/* Dark radial/linear gradient overlay */}
         <div style={{
           position: 'absolute',

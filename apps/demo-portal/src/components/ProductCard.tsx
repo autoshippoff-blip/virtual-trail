@@ -10,7 +10,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, brand }) => {
   const [isHovered, setIsHovered] = useState(false);
-  
+
   // Resolve product image path dynamically from configuration
   const productImageUrl = product.imageUrl;
 

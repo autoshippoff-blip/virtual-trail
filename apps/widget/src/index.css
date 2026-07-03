@@ -9,30 +9,30 @@
 
 /* ── Design Tokens ──────────────────────────────────────────── */
 .tryon-widget-container {
-  --vt-primary:    #FF5A5F;
-  --vt-accent:     #7C3AED;
-  --vt-bg:         #0F1115;
-  --vt-card:       rgba(255, 255, 255, 0.07);
+  --vt-primary: #FF5A5F;
+  --vt-accent: #7C3AED;
+  --vt-bg: #0F1115;
+  --vt-card: rgba(255, 255, 255, 0.07);
   --vt-card-hover: rgba(255, 255, 255, 0.11);
-  --vt-border:     rgba(255, 255, 255, 0.10);
-  --vt-text:       #F5F5F5;
+  --vt-border: rgba(255, 255, 255, 0.10);
+  --vt-text: #F5F5F5;
   --vt-text-muted: rgba(245, 245, 245, 0.55);
-  --vt-shadow-sm:  0 2px 12px rgba(0,0,0,0.4);
-  --vt-shadow-md:  0 8px 32px rgba(0,0,0,0.5);
-  --vt-shadow-lg:  0 20px 60px rgba(0,0,0,0.6);
-  --vt-blur:       blur(16px);
-  --vt-radius-sm:  8px;
-  --vt-radius-md:  16px;
-  --vt-radius-lg:  24px;
-  --vt-radius-xl:  32px;
-  --vt-font:       'Inter', system-ui, -apple-system, sans-serif;
-  --vt-space-1:    4px;
-  --vt-space-2:    8px;
-  --vt-space-3:    12px;
-  --vt-space-4:    16px;
-  --vt-space-5:    20px;
-  --vt-space-6:    24px;
-  --vt-space-8:    32px;
+  --vt-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.4);
+  --vt-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --vt-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
+  --vt-blur: blur(16px);
+  --vt-radius-sm: 8px;
+  --vt-radius-md: 16px;
+  --vt-radius-lg: 24px;
+  --vt-radius-xl: 32px;
+  --vt-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --vt-space-1: 4px;
+  --vt-space-2: 8px;
+  --vt-space-3: 12px;
+  --vt-space-4: 16px;
+  --vt-space-5: 20px;
+  --vt-space-6: 24px;
+  --vt-space-8: 32px;
 
   font-family: var(--vt-font);
   -webkit-font-smoothing: antialiased;
@@ -79,86 +79,182 @@
 
 /* ── Keyframe Animations ────────────────────────────────────── */
 @keyframes vt-fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes vt-fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes vt-scaleIn {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes vt-slideUp {
-  from { opacity: 0; transform: translateY(100%); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes vt-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 90, 95, 0.55); }
-  50%       { box-shadow: 0 0 0 12px rgba(255, 90, 95, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 90, 95, 0.55);
+  }
+
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 90, 95, 0);
+  }
 }
 
 @keyframes vt-pulseSoft {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.04); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
 }
 
 @keyframes vt-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes vt-shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes vt-scan {
-  0%   { top: 0%; opacity: 0.85; }
-  50%  { top: 100%; opacity: 0.85; }
-  100% { top: 0%; opacity: 0.85; }
+  0% {
+    top: 0%;
+    opacity: 0.85;
+  }
+
+  50% {
+    top: 100%;
+    opacity: 0.85;
+  }
+
+  100% {
+    top: 0%;
+    opacity: 0.85;
+  }
 }
 
 @keyframes vt-float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-5px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 @keyframes vt-progressIndeterminate {
-  0%   { left: -30%; width: 30%; }
-  50%  { left: 20%; width: 60%; }
-  100% { left: 100%; width: 30%; }
+  0% {
+    left: -30%;
+    width: 30%;
+  }
+
+  50% {
+    left: 20%;
+    width: 60%;
+  }
+
+  100% {
+    left: 100%;
+    width: 30%;
+  }
 }
 
 /* ── Animation Utility Classes ──────────────────────────────── */
-.vt-anim-fadeIn   { animation: vt-fadeIn 0.35s ease forwards; }
-.vt-anim-fadeUp   { animation: vt-fadeUp 0.45s cubic-bezier(.16,1,.3,1) forwards; }
-.vt-anim-scaleIn  { animation: vt-scaleIn 0.4s cubic-bezier(.16,1,.3,1) forwards; }
-.vt-anim-slideUp  { animation: vt-slideUp 0.45s cubic-bezier(.16,1,.3,1) forwards; }
-.vt-anim-pulse    { animation: vt-pulse 2.2s infinite; }
-.vt-anim-spin     { animation: vt-spin 1s linear infinite; }
-.vt-anim-float    { animation: vt-float 3s ease-in-out infinite; }
+.vt-anim-fadeIn {
+  animation: vt-fadeIn 0.35s ease forwards;
+}
+
+.vt-anim-fadeUp {
+  animation: vt-fadeUp 0.45s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
+.vt-anim-scaleIn {
+  animation: vt-scaleIn 0.4s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
+.vt-anim-slideUp {
+  animation: vt-slideUp 0.45s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
+.vt-anim-pulse {
+  animation: vt-pulse 2.2s infinite;
+}
+
+.vt-anim-spin {
+  animation: vt-spin 1s linear infinite;
+}
+
+.vt-anim-float {
+  animation: vt-float 3s ease-in-out infinite;
+}
 
 /* shimmer skeleton */
 .vt-skeleton {
   position: relative;
   overflow: hidden;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: var(--vt-radius-sm);
 }
+
 .vt-skeleton::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.10) 50%,
-    rgba(255,255,255,0) 100%
-  );
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.10) 50%,
+      rgba(255, 255, 255, 0) 100%);
   animation: vt-shimmer 1.6s infinite;
 }
 
@@ -169,11 +265,10 @@
   width: 100%;
   height: 3px;
   background: linear-gradient(90deg,
-    transparent,
-    var(--vt-primary),
-    var(--vt-accent),
-    transparent
-  );
+      transparent,
+      var(--vt-primary),
+      var(--vt-accent),
+      transparent);
   box-shadow: 0 0 10px var(--vt-primary);
   animation: vt-scan 2.6s ease-in-out infinite;
   z-index: 10;
@@ -181,6 +276,7 @@
 
 /* ── Reduced Motion ─────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+
   .vt-anim-fadeIn,
   .vt-anim-fadeUp,
   .vt-anim-scaleIn,
@@ -196,20 +292,43 @@
 }
 
 /* ── Legacy compatibility classes ───────────────────────────── */
-.tryon-scan-line           { position: absolute; left: 0; width: 100%; height: 3px;
-                             background: linear-gradient(90deg,transparent,var(--vt-primary),var(--vt-accent),transparent);
-                             box-shadow: 0 0 10px var(--vt-primary);
-                             animation: vt-scan 2.6s ease-in-out infinite; z-index: 10; }
-.tryon-glow-container      { box-shadow: 0 0 24px rgba(255,90,95,0.25); }
-.tryon-fade-in-up          { animation: vt-fadeUp 0.45s cubic-bezier(.16,1,.3,1) forwards; }
-.tryon-animate-float       { animation: vt-float 3s ease-in-out infinite; }
-.tryon-animate-scale-in    { animation: vt-scaleIn 0.4s cubic-bezier(.16,1,.3,1) forwards; }
-.tryon-animate-shimmer     { position: relative; overflow: hidden; }
+.tryon-scan-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--vt-primary), var(--vt-accent), transparent);
+  box-shadow: 0 0 10px var(--vt-primary);
+  animation: vt-scan 2.6s ease-in-out infinite;
+  z-index: 10;
+}
+
+.tryon-glow-container {
+  box-shadow: 0 0 24px rgba(255, 90, 95, 0.25);
+}
+
+.tryon-fade-in-up {
+  animation: vt-fadeUp 0.45s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
+.tryon-animate-float {
+  animation: vt-float 3s ease-in-out infinite;
+}
+
+.tryon-animate-scale-in {
+  animation: vt-scaleIn 0.4s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
+.tryon-animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
 .tryon-animate-shimmer::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.10) 50%, rgba(255, 255, 255, 0) 100%);
   animation: vt-shimmer 1.6s infinite;
 }
 

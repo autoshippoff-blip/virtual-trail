@@ -45,53 +45,56 @@ export class TenantsController {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Merchant Try-On Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      background-color: #0f111a;
-      color: #e2e8f0;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background-color: #0A0A0A;
+      color: #FFFFFF;
+      font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
     .glass-card {
-      background: rgba(30, 33, 48, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: #111111;
+      border: 1px solid #222222;
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
 <body class="min-h-screen p-6 md:p-12">
   <div class="max-w-5xl mx-auto space-y-8">
     
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-6">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#222222] pb-6">
       <div>
         <h1 class="text-2xl font-bold text-white tracking-tight" id="header-title">Loading Dashboard...</h1>
-        <p class="text-sm text-slate-400 mt-1">Virtual Try-On Usage Analytics</p>
+        <p class="text-sm text-[#A1A1AA] mt-1">Virtual Try-On Usage Analytics</p>
       </div>
-      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FF8000]/10 border border-[#FF8000]/20 text-[#FF8000] text-xs font-semibold">
+        <span class="h-2 w-2 rounded-full bg-[#FF8000] animate-pulse"></span>
         System Active
       </div>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="glass-card rounded-2xl p-6">
-        <p class="text-sm font-medium text-slate-400">This Month's Try-Ons</p>
+        <p class="text-sm font-medium text-[#A1A1AA]">This Month's Try-Ons</p>
         <p class="text-3xl font-bold text-white mt-2" id="stat-this-month">-</p>
-        <p class="text-xs text-slate-500 mt-1" id="stat-total">Total All-Time: -</p>
+        <p class="text-xs text-[#6B7280] mt-1" id="stat-total">Total All-Time: -</p>
       </div>
       <div class="glass-card rounded-2xl p-6">
-        <p class="text-sm font-medium text-slate-400">Completed Looks</p>
-        <p class="text-3xl font-bold text-emerald-400 mt-2" id="stat-completed">-</p>
+        <p class="text-sm font-medium text-[#A1A1AA]">Completed Looks</p>
+        <p class="text-3xl font-bold text-[#16A34A] mt-2" id="stat-completed">-</p>
       </div>
       <div class="glass-card rounded-2xl p-6">
-        <p class="text-sm font-medium text-slate-400">Success Rate</p>
-        <p class="text-3xl font-bold text-cyan-400 mt-2" id="stat-success-rate">-</p>
+        <p class="text-sm font-medium text-[#A1A1AA]">Success Rate</p>
+        <p class="text-3xl font-bold text-[#0779FF] mt-2" id="stat-success-rate">-</p>
       </div>
       <div class="glass-card rounded-2xl p-6">
-        <p class="text-sm font-medium text-slate-400">Avg Generation Time</p>
-        <p class="text-3xl font-bold text-purple-400 mt-2" id="stat-avg-time">-</p>
+        <p class="text-sm font-medium text-[#A1A1AA]">Avg Generation Time</p>
+        <p class="text-3xl font-bold text-[#F79D1D] mt-2" id="stat-avg-time">-</p>
       </div>
     </div>
 
@@ -142,7 +145,7 @@ export class TenantsController {
             datasets: [{
               label: 'Successful Try-Ons',
               data: counts,
-              backgroundColor: 'rgba(16, 185, 129, 0.8)',
+              backgroundColor: 'rgba(255, 128, 0, 0.85)',
               borderRadius: 4,
             }]
           },
@@ -164,7 +167,7 @@ export class TenantsController {
             labels: ['Completed', 'Failed', 'Processing/Queued'],
             datasets: [{
               data: [data.completedCount, data.failedCount, data.queuedCount + data.processingCount],
-              backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+              backgroundColor: ['#16A34A', '#DC2626', '#F59E0B'],
               borderWidth: 0
             }]
           },
@@ -173,7 +176,7 @@ export class TenantsController {
             maintainAspectRatio: false,
             cutout: '75%',
             plugins: {
-              legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 20, font: { size: 12 } } }
+              legend: { position: 'bottom', labels: { color: '#A1A1AA', padding: 20, font: { size: 12 } } }
             }
           }
         });

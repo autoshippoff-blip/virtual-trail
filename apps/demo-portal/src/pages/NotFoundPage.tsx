@@ -5,13 +5,13 @@ export const NotFoundPage: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#0A0B10',
-      color: '#F3F4F6',
+      backgroundColor: '#0A0A0A',
+      color: '#FFFFFF',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '24px',
-      fontFamily: "Inter, system-ui, -apple-system, sans-serif"
+      fontFamily: "Outfit, system-ui, -apple-system, sans-serif"
     }}>
       <div style={{
         maxWidth: '480px',
@@ -28,20 +28,20 @@ export const NotFoundPage: React.FC = () => {
           width: '64px',
           height: '64px',
           borderRadius: '50%',
-          background: 'rgba(124, 58, 237, 0.12)',
-          border: '1px solid rgba(124, 58, 237, 0.25)',
+          background: 'rgba(255, 128, 0, 0.12)',
+          border: '1px solid rgba(255, 128, 0, 0.25)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           margin: '0 auto 24px auto'
         }}>
-          <HelpCircle style={{ width: '28px', height: '28px', color: '#A78BFA' }} />
+          <HelpCircle style={{ width: '28px', height: '28px', color: '#FF8000' }} />
         </div>
         
         <h1 style={{
           fontSize: '24px',
           fontWeight: 800,
-          background: 'linear-gradient(135deg, #FF5A5F 0%, #7C3AED 100%)',
+          background: 'linear-gradient(135deg, #FF8000 0%, #EA580C 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           margin: '0 0 16px 0',

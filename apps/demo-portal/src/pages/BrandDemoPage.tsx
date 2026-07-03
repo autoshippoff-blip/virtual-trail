@@ -30,9 +30,10 @@ export const BrandDemoPage: React.FC = () => {
           animation: 'spin 1s linear infinite'
         }} />
         <p style={{ marginTop: '16px', fontSize: '14px', color: '#9CA3AF' }}>Resolving Brand Sandbox...</p>
-        
+
         {/* Inline CSS animation for spinner fallback */}
-        <style dangerouslySetInnerHTML={{__html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           @keyframes spin {
             to { transform: rotate(360deg); }
           }

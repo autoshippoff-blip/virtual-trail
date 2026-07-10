@@ -33,6 +33,7 @@ export async function resolveTenantConfig(tenantId: string) {
     name: tenant.name,
     apiKey: tenant.apiKey,   // Required for TenantGuard authentication
     features: tenant.features,
+    leadCaptureEnabled: tenant.config?.leadCaptureEnabled ?? false,
     ...tenant.config,
   };
 

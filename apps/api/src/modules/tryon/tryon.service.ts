@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, Inject } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,7 +7,8 @@ import {
   getProductByTenantAndShopifyId, 
   createProduct,
   createTryonRequest, 
-  getTryonRequest 
+  getTryonRequest,
+  getLeadByTryonRequestId
 } from '@trail/db';
 import { QUEUE_NAMES, JOB_OPTIONS, TryonJobPayload } from '@trail/queue';
 import { upload, getSignedReadUrl } from '@trail/storage';
@@ -16,21 +17,23 @@ import { resolveTenantConfig } from '@trail/tenant';
 import { CreateTryonDto, TryonStatusResponse } from './tryon.dto';
 import { validateUserImage } from './image.validation';
 import { ImageValidationError } from './tryon.errors';
+import { LeadService } from '../lead/lead.service';
 
 @Injectable()
 export class TryonService {
   private readonly logger: Logger;
   private queue: Queue;
   private redis: Redis;
+  private leadService: LeadService;
 
-  constructor() {
-    // Assign all fields inside constructor so ESNext class fields
-    // (useDefineForClassFields) cannot overwrite them after construction
+  constructor(@Inject(LeadService) leadService?: LeadService) {
     this.logger = new Logger(TryonService.name);
     const connection = new Redis(appConfig.redis.url, { maxRetriesPerRequest: null });
     this.queue = new Queue(QUEUE_NAMES.TRYON, { connection });
     this.redis = connection;
+    this.leadService = leadService || new LeadService();
   }
+
 
   async create(dto: CreateTryonDto, requestId: string): Promise<{ jobId: string }> {
     // 0. Verify cryptographic request signature if provided (secures API from public automated scrape vectors)
@@ -203,6 +206,38 @@ export class TryonService {
   }
 
   private async mapToResponse(record: any): Promise<TryonStatusResponse> {
+    if (record.status !== 'completed' && record.status !== 'failed') {
+      return { status: record.status };
+    }
+
+    if (record.status === 'failed') {
+      return { status: 'failed' };
+    }
+
+    // Step 5 Backward Compatibility: Check tenant leadCaptureEnabled flag
+    let leadCaptureEnabled = false;
+    try {
+      const config = await resolveTenantConfig(record.tenantId);
+      leadCaptureEnabled = config?.leadCaptureEnabled === true;
+    } catch (e) {
+      this.logger.warn(`Failed to resolve tenant config for ${record.tenantId} in mapToResponse: ${e}`);
+    }
+
+    if (leadCaptureEnabled && record.generatedImageKey) {
+      const lead = await getLeadByTryonRequestId(record.id);
+      if (!lead) {
+        this.logger.debug(`[Lead Capture Required] Job ${record.id} completed, awaiting contact submission`);
+        const previewImage = await getSignedReadUrl(record.generatedImageKey);
+        const unlockToken = await this.leadService.generateUnlockToken(record.tenantId, record.id);
+        return {
+          status: record.status,
+          requiresLeadCapture: true,
+          previewImage,
+          unlockToken,
+        };
+      }
+    }
+
     let imageUrl: string | undefined;
     if (record.generatedImageKey) {
       imageUrl = await getSignedReadUrl(record.generatedImageKey);
@@ -210,6 +245,7 @@ export class TryonService {
 
     return {
       status: record.status,
+      requiresLeadCapture: false,
       imageUrl,
       compliment: record.compliment,
       styleScore: record.styleScore,
@@ -217,3 +253,4 @@ export class TryonService {
     };
   }
 }
+

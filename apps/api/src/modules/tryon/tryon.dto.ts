@@ -33,7 +33,11 @@ export interface TryonResponse {
 export interface TryonStatusResponse {
   status: string;
   imageUrl?: string;
+  previewImage?: string;
+  requiresLeadCapture?: boolean;
+  unlockToken?: string;
   compliment?: string;
   styleScore?: number;
   complimentCached?: boolean;
 }
+

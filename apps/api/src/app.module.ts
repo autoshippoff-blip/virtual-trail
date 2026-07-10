@@ -10,6 +10,7 @@ import { TenantsModule } from './modules/tenants/tenants.module';
 import { TryonModule } from './modules/tryon/tryon.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ShopifyModule } from './modules/shopify/shopify.module';
+import { LeadModule } from './modules/lead/lead.module';
 import { RedisThrottlerStorage } from './common/throttler/redis-throttler.storage';
 
 @Module({
@@ -31,9 +32,11 @@ import { RedisThrottlerStorage } from './common/throttler/redis-throttler.storag
     }),
     TenantsModule,
     TryonModule,
+    LeadModule,
     AdminModule,
     ShopifyModule,
   ],
+
   controllers: [AppController],
   providers: [
     {

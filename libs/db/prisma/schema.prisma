@@ -98,6 +98,7 @@ model Lead {
   @@unique([tenantId, tryonRequestId])
   @@index([tenantId, createdAt])
   @@index([tenantId, status])
+  @@index([tenantId, countryCode, phoneNumber])
 }
 
 

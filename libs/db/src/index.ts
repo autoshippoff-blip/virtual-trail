@@ -197,4 +197,28 @@ export async function updateLeadStatus(id: string, status: string) {
   });
 }
 
+export async function getLeadByPhone(tenantId: string, countryCode: string, phoneNumber: string) {
+  return prisma.lead.findFirst({
+    where: {
+      tenantId,
+      countryCode,
+      phoneNumber,
+    },
+    include: {
+      tryonRequest: {
+        include: { product: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+export async function updateLead(id: string, data: Prisma.LeadUpdateInput) {
+  return prisma.lead.update({
+    where: { id },
+    data,
+  });
+}
+
+
 

@@ -141,3 +141,41 @@ export async function purgeTenantFromDb(id: string) {
     where: { id },
   });
 }
+
+// Lead Repository functions
+
+export async function createLead(data: Prisma.LeadUncheckedCreateInput) {
+  return prisma.lead.create({ data });
+}
+
+export async function getLeadById(id: string) {
+  return prisma.lead.findUnique({
+    where: { id },
+    include: { tryonRequest: true },
+  });
+}
+
+export async function getLeadByTryonRequestId(tryonRequestId: string) {
+  return prisma.lead.findUnique({
+    where: { tryonRequestId },
+  });
+}
+
+export async function getLeadsForTenant(tenantId: string, options?: { productId?: string; status?: string }) {
+  const where: Prisma.LeadWhereInput = { tenantId };
+  if (options?.productId) where.productId = options.productId;
+  if (options?.status) where.status = options.status;
+
+  return prisma.lead.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+export async function updateLeadStatus(id: string, status: string) {
+  return prisma.lead.update({
+    where: { id },
+    data: { status },
+  });
+}
+

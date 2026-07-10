@@ -19,6 +19,7 @@ model Tenant {
   config        TenantConfig?
   products      Product[]
   tryonRequests TryonRequest[]
+  leads         Lead[]
 }
 
 model TenantConfig {
@@ -74,6 +75,31 @@ model TryonRequest {
   complimentCached  Boolean   @default(false)  // true = served from Redis, no Gemini call made
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  lead              Lead?
+}
+
+model Lead {
+  id                String       @id @default(uuid())
+  tenantId          String
+  tenant            Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tryonRequestId    String       @unique
+  tryonRequest      TryonRequest @relation(fields: [tryonRequestId], references: [id], onDelete: Cascade)
+  customerName      String
+  phoneNumber       String
+  countryCode       String
+  marketingConsent  Boolean      @default(true)
+  consentTimestamp  DateTime     @default(now())
+  generatedImageKey String?
+  originalImageKey  String?
+  productId         String
+  productTitle      String?
+  status            String       @default("active") // active | contacted | converted | unsubscribed
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([tenantId, tryonRequestId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, productId])
 }
 
 model AuditLog {

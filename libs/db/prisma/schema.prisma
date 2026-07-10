@@ -79,28 +79,27 @@ model TryonRequest {
 }
 
 model Lead {
-  id                String       @id @default(uuid())
-  tenantId          String
-  tenant            Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tryonRequestId    String       @unique
-  tryonRequest      TryonRequest @relation(fields: [tryonRequestId], references: [id], onDelete: Cascade)
-  customerName      String
-  phoneNumber       String
-  countryCode       String
-  marketingConsent  Boolean      @default(true)
-  consentTimestamp  DateTime     @default(now())
-  generatedImageKey String?
-  originalImageKey  String?
-  productId         String
-  productTitle      String?
-  status            String       @default("active") // active | contacted | converted | unsubscribed
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id                 String       @id @default(uuid())
+  tenantId           String
+  tenant             Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tryonRequestId     String       @unique
+  tryonRequest       TryonRequest @relation(fields: [tryonRequestId], references: [id], onDelete: Cascade)
+  customerName       String
+  phoneNumber        String
+  countryCode        String
+  marketingConsentAt DateTime?
+  whatsappOptInAt    DateTime?
+  status             String       @default("NEW") // NEW | MARKETING_READY | MESSAGE_SENT | DELIVERED | CLICKED | PURCHASED | UNSUBSCRIBED
+  campaignCount      Int          @default(0)
+  lastCampaignAt     DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
   @@unique([tenantId, tryonRequestId])
   @@index([tenantId, createdAt])
-  @@index([tenantId, productId])
+  @@index([tenantId, status])
 }
+
 
 model AuditLog {
   id        String   @id @default(uuid())

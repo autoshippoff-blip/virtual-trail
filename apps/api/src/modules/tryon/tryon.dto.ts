@@ -20,6 +20,10 @@ export class CreateTryonDto {
   @IsNumber()
   @IsOptional()
   timestamp?: number;
+
+  @IsString()
+  @IsOptional()
+  productImageUrl?: string;
 }
 
 export interface TryonResponse {

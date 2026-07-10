@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { config as appConfig } from '@trail/config';
 import { 
   getProductByTenantAndShopifyId, 
+  createProduct,
   createTryonRequest, 
   getTryonRequest 
 } from '@trail/db';
@@ -99,7 +100,22 @@ export class TryonService {
     }
 
     if (!product) {
-      throw new NotFoundException(`Product ${dto.productId} not found for tenant ${dto.tenantId}`);
+      this.logger.log(`[Auto-Provision] Product ${dto.productId} not found in DB for tenant ${dto.tenantId}. Auto-creating JIT record...`);
+      try {
+        product = await createProduct({
+          tenantId: dto.tenantId,
+          shopifyProductId: dto.productId,
+          imageUrl: dto.productImageUrl || '',
+        });
+        await this.redis.set(productCacheKey, JSON.stringify(product), 'EX', 600);
+      } catch (err: any) {
+        // Handle potential race condition or concurrent insert gracefully
+        product = await getProductByTenantAndShopifyId(dto.tenantId, dto.productId);
+      }
+    }
+
+    if (!product) {
+      throw new NotFoundException(`Product ${dto.productId} could not be resolved or created for tenant ${dto.tenantId}`);
     }
 
     // 4. Create request in DB

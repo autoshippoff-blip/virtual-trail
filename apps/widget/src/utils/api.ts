@@ -38,6 +38,15 @@ export async function startTryOn(tenantId: string, productId: string, userImage:
     console.log('TryOnWidget: Starting try-on at', `${runtimeConfig.apiUrl}/v1/tryon`);
   }
 
+  // Attempt to extract product image URL from page context (DOM / Shopify open graph tag)
+  let productImageUrl = '';
+  if (typeof window !== 'undefined') {
+    const metaImg = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+    if (metaImg) {
+      productImageUrl = metaImg.startsWith('//') ? `https:${metaImg}` : metaImg;
+    }
+  }
+
   const response = await fetch(`${runtimeConfig.apiUrl}/v1/tryon`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -46,6 +55,7 @@ export async function startTryOn(tenantId: string, productId: string, userImage:
       productId,
       tenantApiKey: runtimeConfig.tenantApiKey,
       userImage: optimizedImage,
+      ...(productImageUrl ? { productImageUrl } : {}),
     }),
   });
 

@@ -144,13 +144,35 @@ export async function processTryOn(job: Job<TryonJobPayload>) {
       fallbackUsed
     }, 'Garment image selection result');
 
+    // Resolve the shopifyDomain from the tenant to bypass storefront SSRF blocks
+    let finalGarmentUrl = selectedGarmentUrl;
+    if (selectedGarmentUrl.includes('/cdn/shop/')) {
+      try {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+        });
+        if (tenant && tenant.shopifyDomain) {
+          const parsed = new URL(selectedGarmentUrl);
+          const hostname = parsed.hostname.toLowerCase();
+          if (!hostname.endsWith('shopify.com') && !hostname.endsWith('shopifycdn.com')) {
+            parsed.hostname = tenant.shopifyDomain;
+            parsed.protocol = 'https:'; // force secure connection
+            finalGarmentUrl = parsed.toString();
+            logger.info({ tenantId, original: selectedGarmentUrl, rewritten: finalGarmentUrl }, 'Rewrote storefront custom domain garment URL to shopifyDomain');
+          }
+        }
+      } catch (err: any) {
+        logger.warn({ error: err.message, tenantId }, 'Failed to rewrite garment image URL');
+      }
+    }
+
     // STEP 4: Call active provider with local retries
     const provider = getProvider();
     const providerStart = Date.now();
     const result = await withRetry(
       () => provider.generate({
         modelImage: userImageUrl,
-        garmentImage: selectedGarmentUrl,
+        garmentImage: finalGarmentUrl,
         tenantId,
         productId,
         requestId,

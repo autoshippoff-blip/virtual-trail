@@ -56,6 +56,7 @@ const ALLOWED_HOSTNAME_SUFFIXES = [
   'shopifycdn.com',
   'shopifycloud.com',
   'cdn.shopifycloud.com',
+  'myshopify.com',
   // Cloudflare R2 / public CDN
   'r2.dev',
   'r2.cloudflarestorage.com',
